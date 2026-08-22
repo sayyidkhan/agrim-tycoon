@@ -4,6 +4,7 @@ export interface GameStats {
   community: number;
   students: number;
   elon: number;
+  control: number;
   energy: number;
 }
 
@@ -12,6 +13,7 @@ export interface ScenarioChoice {
   detail: string;
   decision: string;
   delegate?: boolean;
+  uncertain?: boolean;
   effects: Partial<GameStats>;
 }
 
@@ -24,6 +26,8 @@ export interface Scenario {
   body: string;
   timeout: number;
   neglect: Partial<GameStats>;
+  plotTwist?: "elon-arrival";
+  portrait?: string;
   choices: [ScenarioChoice, ScenarioChoice, ScenarioChoice];
 }
 
@@ -115,33 +119,38 @@ export const scenarios: Scenario[] = [
     ],
   },
   {
-    id: "demo-question",
+    id: "elon-arrives",
     day: 2,
     station: "spacex",
-    sender: "E · 02:13",
-    title: "Demo?",
-    body: "One word. No punctuation. The anomaly detector currently identifies every rocket as ‘interesting.’",
-    timeout: 20,
-    neglect: { elon: -16, energy: -3 },
+    sender: "SpaceXAI · Unscheduled arrival",
+    title: "Elon has entered the city",
+    body: "He could accelerate Innovation City by a decade—or quietly redesign it around himself before sunrise. Gemma sees both futures.",
+    timeout: 24,
+    neglect: { elon: -14, community: -5, energy: -3 },
+    plotTwist: "elon-arrival",
+    portrait: "/images/elon-twist.jpg",
     choices: [
       {
-        label: "Ship the honest demo",
-        detail: "Show the failure mode and the evaluation plan.",
-        decision: "Demo the imperfect anomaly detector with an honest evaluation plan.",
-        effects: { elon: 8, energy: -7 },
+        label: "Hand him the controls",
+        detail: "Maximum acceleration. Maximum takeover risk.",
+        decision: "Give Elon immediate control of SpaceXAI's city systems and ask him to accelerate the roadmap.",
+        uncertain: true,
+        effects: { energy: -3 },
       },
       {
-        label: "Polish one golden path",
-        detail: "Make exactly one example look spectacular.",
-        decision: "Polish one perfect SpaceXAI demonstration path.",
-        effects: { elon: 5, energy: -4 },
+        label: "Make him earn access",
+        detail: "Use a sandbox, civic guardrails, and staged authority.",
+        decision: "Give Elon a sandboxed SpaceXAI mandate with public guardrails and staged access to city systems.",
+        uncertain: true,
+        effects: { energy: -5 },
       },
       {
-        label: "Gemma reads the logs",
-        detail: "Delegate anomaly prioritisation to the local model.",
-        decision: "Ask Gemma to prioritise the most urgent rocket anomaly report.",
+        label: "Ask Gemma to war-game him",
+        detail: "Simulate both futures before opening the gates.",
+        decision: "Ask Gemma to simulate whether Elon's arrival improves Innovation City or gives him control of it.",
         delegate: true,
-        effects: { elon: 4, energy: -2 },
+        uncertain: true,
+        effects: { energy: -2 },
       },
     ],
   },
@@ -399,6 +408,7 @@ export const initialStats: GameStats = {
   community: 68,
   students: 66,
   elon: 52,
+  control: 68,
   energy: 86,
 };
 
@@ -411,12 +421,20 @@ export function endingFor(stats: GameStats) {
     stats.community >= 70 ? "Community Legend" : stats.community >= 40 ? "Busy Moderator" : "Discord Tyrant";
   const teaching =
     stats.students >= 70 ? "Great Sage" : stats.students >= 40 ? "Helpful Tutor" : "Vibe Coding Fraud";
-  const spacex =
-    stats.elon >= 70 ? "Honored by Elon" : stats.elon >= 40 ? "Still Employed" : "Fired by Elon";
+  const spacex = stats.control < 35
+    ? "The Machines Own the City"
+    : stats.elon >= 70 && stats.control >= 65
+      ? "Tamed the Machines"
+      : stats.elon >= 40
+        ? "An Uneasy Alliance"
+        : "Locked Out of SpaceXAI";
 
   let overall = "The Three-Job Survivor";
-  if (stats.energy <= 0) overall = "Burnout% Speedrun";
-  else if (stats.community >= 70 && stats.students >= 70 && stats.elon >= 70) overall = "The Ultimate Agrim";
+  if (stats.control <= 25) overall = "Owned by AI";
+  else if (stats.energy <= 0) overall = "Burnout% Speedrun";
+  else if (stats.community >= 70 && stats.students >= 70 && stats.elon >= 70 && stats.control >= 65) {
+    overall = "Mayor of Innovation City";
+  }
   else if ([stats.community, stats.students, stats.elon].filter((score) => score < 40).length >= 2) {
     overall = "Task Failed Successfully";
   }

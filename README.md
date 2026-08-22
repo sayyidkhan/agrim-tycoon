@@ -52,6 +52,22 @@ npm test
 npm run lint
 ```
 
-## Zo deployment
+## Vercel deployment
 
-Deploy the web application as a public Zo HTTP service. Run `llama-server` separately as a private Zo process service bound to `127.0.0.1`. Configure secrets through Zo's service environment variables.
+Vercel uses the default scripts in `package.json`, which build and run the
+native Next.js application (`next build` / `next start`). Import the repository
+as a Next.js project and leave the Output Directory unset; Vercel will detect
+the generated `.next` directory automatically.
+
+Add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in the Vercel project
+environment variables. A `GEMMA_BASE_URL` pointing at `127.0.0.1` only works
+when Gemma runs on the same host, so it is not reachable from Vercel; the app
+uses its deterministic fallback unless Gemma is exposed through a reachable,
+appropriately secured service.
+
+## Cloudflare / Zo deployment
+
+For the Cloudflare Worker build used by Zo, run `npm run build:cloudflare`.
+Deploy the web application as a public Zo HTTP service. Run `llama-server`
+separately as a private Zo process service bound to `127.0.0.1`. Configure
+secrets through Zo's service environment variables.

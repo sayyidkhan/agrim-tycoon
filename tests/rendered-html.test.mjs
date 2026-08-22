@@ -31,9 +31,9 @@ test("server-renders the Agrim Tycoon landing experience", async () => {
   assert.match(html, /<title>Agrim Tycoon/);
   assert.match(html, /AGRIM/);
   assert.match(html, /TYCOON/);
-  assert.match(html, /Start the week/);
+  assert.match(html, /Download for macOS/);
   assert.match(html, /How to play/);
-  assert.match(html, /Local intelligence by Gemma/);
+  assert.match(html, /Gemma runs locally on your Mac/);
   assert.match(html, /World direction by Gemini/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });

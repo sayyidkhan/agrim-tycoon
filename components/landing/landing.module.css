@@ -555,10 +555,13 @@
 }
 
 .actions button,
-.modalFooter button {
+.actions a,
+.modalFooter button,
+.modalFooter a {
   min-height: 58px;
   border-radius: 0;
   cursor: pointer;
+  text-decoration: none;
   transition: color 180ms ease, background 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
@@ -591,7 +594,8 @@
 
 .startButton:active,
 .guideButton:active,
-.modalFooter button:active {
+.modalFooter button:active,
+.modalFooter a:active {
   transform: translateY(1px);
 }
 
@@ -750,14 +754,66 @@
   background: var(--ink);
 }
 
-.missionArtwork img {
+.missionArtwork > img {
   object-fit: cover;
   filter: saturate(0.82) contrast(1.04);
   transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.guideModal .instructions li:hover .missionArtwork img {
+.guideModal .instructions li:hover .missionArtwork > img {
   transform: scale(1.025);
+}
+
+.elonArtworkOverlay {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 43%;
+  overflow: hidden;
+  border: 0;
+  border-left: 1px solid rgba(242, 239, 232, 0.35);
+  padding: 0;
+  clip-path: polygon(17% 0, 100% 0, 100% 100%, 0 100%);
+  background: #080908;
+  color: inherit;
+  cursor: help;
+}
+
+.elonArtworkOverlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(8, 9, 8, 0.82), transparent 34%);
+}
+
+.elonArtworkOverlay img {
+  object-fit: cover;
+  object-position: 69% 26%;
+  filter: grayscale(1) sepia(0.24) contrast(1.16) brightness(0.92);
+}
+
+.elonArtworkOverlay:focus-visible {
+  outline: 2px solid #f0be3d;
+  outline-offset: -4px;
+}
+
+.plotTwistBadge {
+  position: absolute;
+  z-index: 4;
+  right: 10px;
+  bottom: 10px;
+  border: 1px solid rgba(242, 239, 232, 0.5);
+  padding: 6px 8px;
+  background: rgba(17, 17, 15, 0.88);
+  color: #f0be3d;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 8px;
+  font-weight: 720;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
 }
 
 .missionNumber {
@@ -806,6 +862,11 @@
 .guideModal .instructions p {
   font-size: 12px;
   line-height: 1.55;
+}
+
+.guideModal .instructions .plotTwistCopy {
+  color: #302f2b;
+  animation: plot-twist-copy-in 220ms ease-out both;
 }
 
 .modalHeader,
@@ -922,7 +983,8 @@
   border-top: 1px solid var(--line);
 }
 
-.modalFooter button {
+.modalFooter button,
+.modalFooter a {
   display: flex;
   min-height: 48px;
   align-items: center;
@@ -935,7 +997,8 @@
   font-weight: 650;
 }
 
-.modalFooter button:hover {
+.modalFooter button:hover,
+.modalFooter a:hover {
   border-color: var(--signal);
   background: var(--signal);
 }
@@ -1710,6 +1773,11 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes plot-twist-copy-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes story-panel-in {
   from { opacity: 0; transform: scale(1.035); filter: contrast(1.25); }
   to { opacity: 1; transform: scale(1); filter: contrast(1); }
@@ -2043,7 +2111,8 @@
     margin-top: 25px;
   }
 
-  .actions button {
+  .actions button,
+  .actions a {
     min-height: 54px;
   }
 
@@ -2190,7 +2259,8 @@
     display: none;
   }
 
-  .modalFooter button {
+  .modalFooter button,
+  .modalFooter a {
     width: 100%;
     justify-content: space-between;
   }

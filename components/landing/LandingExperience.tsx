@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GameExperience } from "@/components/game/GameExperience";
 import styles from "./landing.module.css";
 
-type Screen = "landing" | "departing" | "game";
 type SummaryPhase = "typing" | "holding" | "deleting" | "waiting";
+
+const MAC_DOWNLOAD_URL =
+  process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL ?? "/downloads/AgrimTycoon.dmg";
 
 const SUMMARY =
   "Protect the community. Teach the builders. Ship something brilliant before Elon asks twice.";
@@ -60,9 +61,9 @@ const STORY_CHAPTERS = [
 ] as const;
 
 export function LandingExperience() {
-  const [screen, setScreen] = useState<Screen>("landing");
   const [showGuide, setShowGuide] = useState(false);
   const [showBackstory, setShowBackstory] = useState(false);
+  const [showElonPlotTwist, setShowElonPlotTwist] = useState(false);
   const [storyChapter, setStoryChapter] = useState(0);
   const [summaryLength, setSummaryLength] = useState(0);
   const [summaryPhase, setSummaryPhase] = useState<SummaryPhase>("typing");
@@ -73,22 +74,12 @@ export function LandingExperience() {
   const backstoryModalRef = useRef<HTMLElement>(null);
   const backstoryCloseButtonRef = useRef<HTMLButtonElement>(null);
   const backstoryButtonRef = useRef<HTMLButtonElement>(null);
-
-  const startGame = useCallback(() => {
-    if (screen !== "landing" || showGuide || showBackstory) return;
-    setScreen("departing");
-    window.setTimeout(() => setScreen("game"), 720);
-  }, [screen, showBackstory, showGuide]);
+  const downloadButtonRef = useRef<HTMLAnchorElement>(null);
 
   const closeGuide = useCallback(() => {
+    setShowElonPlotTwist(false);
     setShowGuide(false);
     window.requestAnimationFrame(() => howToButtonRef.current?.focus());
-  }, []);
-
-  const startFromGuide = useCallback(() => {
-    setShowGuide(false);
-    setScreen("departing");
-    window.setTimeout(() => setScreen("game"), 720);
   }, []);
 
   const closeBackstory = useCallback(() => {
@@ -156,15 +147,15 @@ export function LandingExperience() {
 
       if (event.key === "Enter") {
         event.preventDefault();
-        startGame();
+        downloadButtonRef.current?.click();
       }
 
-      if (event.key.toLowerCase() === "h" && screen === "landing") {
+      if (event.key.toLowerCase() === "h") {
         event.preventDefault();
         setShowGuide(true);
       }
 
-      if (event.key.toLowerCase() === "a" && screen === "landing") {
+      if (event.key.toLowerCase() === "a") {
         event.preventDefault();
         openBackstory();
       }
@@ -176,12 +167,10 @@ export function LandingExperience() {
     closeBackstory,
     closeGuide,
     openBackstory,
-    screen,
     showBackstory,
     showGuide,
     showNextChapter,
     showPreviousChapter,
-    startGame,
   ]);
 
   useEffect(() => {
@@ -210,8 +199,6 @@ export function LandingExperience() {
   }, []);
 
   useEffect(() => {
-    if (screen !== "landing") return;
-
     let timer: number | undefined;
 
     if (reduceMotion) {
@@ -244,7 +231,7 @@ export function LandingExperience() {
     }
 
     return () => window.clearTimeout(timer);
-  }, [reduceMotion, screen, summaryLength, summaryPhase]);
+  }, [reduceMotion, summaryLength, summaryPhase]);
 
   const activeStory = STORY_CHAPTERS[storyChapter];
   const storyMotionClass = [
@@ -254,16 +241,8 @@ export function LandingExperience() {
     styles.storyMotionFour,
   ][storyChapter] ?? styles.storyMotionFinal;
 
-  if (screen === "game") {
-    return <GameExperience />;
-  }
-
   return (
-    <main
-      className={`${styles.landing} ${
-        screen === "departing" ? styles.isDeparting : ""
-      }`}
-    >
+    <main className={styles.landing}>
       <div className={styles.portrait} aria-hidden="true">
         <Image
           src="/images/agrim-hero.png"
@@ -425,10 +404,15 @@ export function LandingExperience() {
         </p>
 
         <nav className={styles.actions} aria-label="Game menu">
-          <button className={styles.startButton} type="button" onClick={startGame}>
-            <span>Start the week</span>
-            <span className={styles.arrow} aria-hidden="true">↗</span>
-          </button>
+          <a
+            ref={downloadButtonRef}
+            className={styles.startButton}
+            href={MAC_DOWNLOAD_URL}
+            download="AgrimTycoon.dmg"
+          >
+            <span>Download for macOS</span>
+            <span className={styles.arrow} aria-hidden="true">↓</span>
+          </a>
           <button
             ref={backstoryButtonRef}
             className={styles.guideButton}
@@ -457,12 +441,12 @@ export function LandingExperience() {
           <span>Code with AI</span>
         </div>
         <div className={styles.models} aria-label="Powered by artificial intelligence models">
-          <span>Local intelligence by Gemma</span>
+          <span>Gemma runs locally on your Mac</span>
           <span>World direction by Gemini</span>
         </div>
       </footer>
 
-      <p className={styles.beginHint} aria-hidden="true">Press Enter to begin</p>
+      <p className={styles.beginHint} aria-hidden="true">Press Enter to download</p>
 
       {showGuide ? (
         <div className={styles.modalBackdrop} role="presentation" onMouseDown={closeGuide}>
@@ -507,14 +491,38 @@ export function LandingExperience() {
                       unoptimized
                       sizes="(max-width: 980px) 45vw, 30vw"
                     />
+                    <button
+                      className={styles.elonArtworkOverlay}
+                      type="button"
+                      aria-label="Reveal the Elon plot twist"
+                      aria-pressed={showElonPlotTwist}
+                      onPointerEnter={() => setShowElonPlotTwist(true)}
+                      onPointerLeave={() => setShowElonPlotTwist(false)}
+                      onFocus={() => setShowElonPlotTwist(true)}
+                      onBlur={() => setShowElonPlotTwist(false)}
+                      onClick={() => setShowElonPlotTwist(true)}
+                    >
+                      <Image
+                        src="/images/elon-twist.jpg"
+                        alt="Elon Musk"
+                        fill
+                        unoptimized
+                        sizes="180px"
+                      />
+                    </button>
                     <span className={styles.missionNumber}>01</span>
+                    <span className={styles.plotTwistBadge}>Plot twist</span>
                   </div>
                   <div className={styles.missionCopy}>
                     <span className={styles.missionLabel}>SpaceXAI · Machine city</span>
                     <strong>Build the machines</strong>
-                    <p>
-                      Build the systems that make Innovation City real—then make
-                      sure every machine still answers to people.
+                    <p
+                      className={showElonPlotTwist ? styles.plotTwistCopy : undefined}
+                      aria-live="polite"
+                    >
+                      {showElonPlotTwist
+                        ? "Elon may accelerate Innovation City—or destabilize it. Gemma simulates both futures; Agrim must capture the upside without handing him control of the city."
+                        : "Build the systems that make Innovation City real—then make sure every machine still answers to people."}
                     </p>
                   </div>
                 </li>
@@ -563,9 +571,9 @@ export function LandingExperience() {
 
             <div className={styles.modalFooter}>
               <p>Good luck, Mayor.</p>
-              <button type="button" onClick={startFromGuide}>
-                Begin your term <span aria-hidden="true">↗</span>
-              </button>
+              <a href={MAC_DOWNLOAD_URL} download="AgrimTycoon.dmg">
+                Download for macOS <span aria-hidden="true">↓</span>
+              </a>
             </div>
           </section>
         </div>

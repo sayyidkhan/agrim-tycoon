@@ -11,6 +11,12 @@ import {
   type ScenarioChoice,
   type StationId,
 } from "@/lib/game/scenarios";
+import {
+  requestGemma,
+  requestWorldConsequence,
+  type GemmaElonResponse,
+  type GemmaTriageResponse,
+} from "@/lib/client/ai";
 import styles from "./game.module.css";
 
 type Phase = "playing" | "resolving" | "finished";
@@ -19,6 +25,7 @@ interface Outcome {
   eyebrow: string;
   headline: string;
   narrative: string;
+  hook?: string;
   effects?: Partial<GameStats>;
   degraded?: boolean;
 }
@@ -28,7 +35,8 @@ const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const statLabels: Array<{ key: keyof GameStats; label: string; code: string }> = [
   { key: "community", label: "Community", code: "65" },
   { key: "students", label: "Builders", code: "AI" },
-  { key: "elon", label: "Mission trust", code: "X" },
+  { key: "elon", label: "Elon alignment", code: "X" },
+  { key: "control", label: "Civic control", code: "H" },
   { key: "energy", label: "Energy", code: "⚡" },
 ];
 
@@ -43,8 +51,18 @@ function applyEffects(stats: GameStats, effects: Partial<GameStats>): GameStats 
     community: clampStat(stats.community + (effects.community ?? 0)),
     students: clampStat(stats.students + (effects.students ?? 0)),
     elon: clampStat(stats.elon + (effects.elon ?? 0)),
+    control: clampStat(stats.control + (effects.control ?? 0)),
     energy: clampStat(stats.energy + (effects.energy ?? 0)),
   };
+}
+
+function mergeEffects(...groups: Array<Partial<GameStats>>): Partial<GameStats> {
+  return groups.reduce<Partial<GameStats>>((combined, group) => {
+    for (const key of Object.keys(group) as Array<keyof GameStats>) {
+      combined[key] = (combined[key] ?? 0) + (group[key] ?? 0);
+    }
+    return combined;
+  }, {});
 }
 
 function stationRole(station: StationId): "community" | "teaching" | "spacex" {
@@ -60,7 +78,7 @@ function impactEntries(effects: Partial<GameStats>) {
 }
 
 function impactLabel(key: keyof GameStats) {
-  return { community: "Community", students: "Builders", elon: "Mission", energy: "Energy" }[key];
+  return { community: "Community", students: "Builders", elon: "Elon", control: "Control", energy: "Energy" }[key];
 }
 
 export function GameExperience() {
@@ -448,6 +466,53 @@ export function GameExperience() {
     async (choice: ScenarioChoice) => {
       if (!scenario || phase !== "playing") return;
       setPhase("resolving");
+
+      if (scenario.plotTwist === "elon-arrival") {
+        setOutcome({
+          eyebrow: "Gemma · probability branch active",
+          headline: "Simulating Elon's impact…",
+          narrative: "Gemma is testing whether this decision accelerates Innovation City—or transfers control of it.",
+        });
+
+        try {
+          const data = await requestGemma<GemmaElonResponse>({
+            mode: "elon_twist",
+            decision: choice.decision,
+            scenario: scenario.body,
+            gameState: stats,
+          });
+          const effects = mergeEffects(choice.effects, data.result?.statChanges ?? {});
+          const nextStats = applyEffects(stats, effects);
+          setStats(nextStats);
+          setOutcome({
+            eyebrow: data.result?.direction === "disruptor"
+              ? "Plot twist · Elon destabilizes the city"
+              : "Plot twist · Elon accelerates the city",
+            headline: data.result?.headline ?? "The city enters a new trajectory.",
+            narrative: data.result?.narrative ?? "Elon's arrival changes the balance of power inside SpaceXAI.",
+            hook: data.result?.nextHook,
+            effects,
+            degraded: data.degraded,
+          });
+          scheduleAdvance(nextStats);
+          return;
+        } catch {
+          const effects = mergeEffects(choice.effects, { elon: 5, control: -7, energy: -2 });
+          const nextStats = applyEffects(stats, effects);
+          setStats(nextStats);
+          setOutcome({
+            eyebrow: "Offline plot twist",
+            headline: "Elon moves faster than the safeguards.",
+            narrative: "The local model goes quiet as SpaceXAI accelerates. Mission confidence rises, but Agrim loses part of the city's human override.",
+            hook: "Restore civic control before the machines approve their own upgrades.",
+            effects,
+            degraded: true,
+          });
+          scheduleAdvance(nextStats);
+          return;
+        }
+      }
+
       const nextStats = applyEffects(stats, choice.effects);
       setStats(nextStats);
       setOutcome({
@@ -461,20 +526,11 @@ export function GameExperience() {
 
       try {
         if (choice.delegate) {
-          const response = await fetch("/api/ai/gemma", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              role: stationRole(scenario.station),
-              message: scenario.body,
-              context: { title: scenario.title, decision: choice.decision, stats: nextStats },
-            }),
+          const data = await requestGemma<GemmaTriageResponse>({
+            role: stationRole(scenario.station),
+            message: scenario.body,
+            context: { title: scenario.title, decision: choice.decision, stats: nextStats },
           });
-          if (!response.ok) throw new Error("Gemma request failed");
-          const data = (await response.json()) as {
-            result?: { recommendedAction?: string; confidence?: number; reason?: string };
-            degraded?: boolean;
-          };
           const recommendation = data.result?.recommendedAction?.replaceAll("_", " ") ?? "review manually";
           const confidence = Math.round((data.result?.confidence ?? 0.5) * 100);
           setOutcome({
@@ -485,21 +541,12 @@ export function GameExperience() {
             degraded: data.degraded,
           });
         } else {
-          const response = await fetch("/api/ai/gemini", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              mode: "consequence",
-              decision: choice.decision,
-              scenario: scenario.body,
-              gameState: nextStats,
-            }),
+          const data = await requestWorldConsequence({
+            mode: "consequence",
+            decision: choice.decision,
+            scenario: scenario.body,
+            gameState: nextStats,
           });
-          if (!response.ok) throw new Error("Gemini request failed");
-          const data = (await response.json()) as {
-            result?: { headline?: string; narrative?: string };
-            degraded?: boolean;
-          };
           setOutcome({
             eyebrow: data.degraded ? "Simulated consequence" : "Gemini · world reaction",
             headline: data.result?.headline ?? choice.label,
@@ -554,7 +601,7 @@ export function GameExperience() {
         <div className={styles.endingGrid}>
           <article><span>65labs</span><strong>{endings.community}</strong><small>{stats.community}/100</small></article>
           <article><span>Code with AI</span><strong>{endings.teaching}</strong><small>{stats.students}/100</small></article>
-          <article><span>SpaceX AI</span><strong>{endings.spacex}</strong><small>{stats.elon}/100</small></article>
+          <article><span>SpaceX AI</span><strong>{endings.spacex}</strong><small>Elon {stats.elon}/100 · Control {stats.control}/100</small></article>
         </div>
         <p className={styles.verdict}>“You kept three worlds moving. Next time, remember that coffee is not a fourth job.”</p>
         <div className={styles.endActions}>
@@ -652,6 +699,7 @@ export function GameExperience() {
               <p>{outcome.eyebrow}</p>
               <h2>{outcome.headline}</h2>
               <span>{outcome.narrative}</span>
+              {outcome.hook ? <p className={styles.outcomeHook}>Next: {outcome.hook}</p> : null}
               {outcome.effects ? (
                 <div className={styles.impactRow}>
                   {impactEntries(outcome.effects).map(([key, value]) => (
@@ -665,7 +713,15 @@ export function GameExperience() {
             </div>
           ) : selectedStation === scenario.station ? (
             <div className={styles.task}>
-              <p>{scenario.sender}</p>
+              {scenario.portrait ? (
+                <div className={styles.twistPortrait}>
+                  {/* The source image is displayed directly so the incident card can preserve its crop. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={scenario.portrait} alt="Elon Musk arrives at SpaceXAI" />
+                  <span><b>Plot twist</b>Gemma narrative branch active</span>
+                </div>
+              ) : null}
+              <p>{scenario.plotTwist ? "Unscheduled event · " : ""}{scenario.sender}</p>
               <h2>{scenario.title}</h2>
               <span>{scenario.body}</span>
               <div className={styles.choices}>
@@ -674,11 +730,13 @@ export function GameExperience() {
                     <i>{String.fromCharCode(65 + index)}</i>
                     <span><strong>{choice.label}</strong><small>{choice.detail}</small></span>
                     <span className={styles.choiceImpact}>
-                      {impactEntries(choice.effects).map(([key, value]) => (
-                        <em className={value > 0 ? styles.positive : styles.negative} key={key}>
-                          {impactLabel(key)} {value > 0 ? "+" : ""}{value}
-                        </em>
-                      ))}
+                      {choice.uncertain ? <em className={styles.uncertain}>Outcome unknown</em> : (
+                        impactEntries(choice.effects).map(([key, value]) => (
+                          <em className={value > 0 ? styles.positive : styles.negative} key={key}>
+                            {impactLabel(key)} {value > 0 ? "+" : ""}{value}
+                          </em>
+                        ))
+                      )}
                     </span>
                   </button>
                 ))}
