@@ -9,7 +9,7 @@
 | **Team name** | Agrim Tycoon |
 | **Team captain** | Sayyid Khan |
 | **Contact email** | sayyidkhan92@hotmail.com |
-| **Project link** | https://github.com/sayyidkhan/agrim-tycoon |
+| **Project link** | https://agrim-tycoon.vercel.app/ |
 | **Demo video link** | `TBD — add the public or unlisted video URL before submitting (maximum 3 minutes).` |
 | **Team members** | Sayyid Khan |
 | **Sponsor prize eligibility** | **Google DeepMind — Best Use of Gemma** |
@@ -25,6 +25,7 @@ Judges should play the Machine City charter scenario and ask Gemma for guardrail
 ## Submission details and proof
 
 - **Project name:** Agrim Tycoon
+- **Live site:** [agrim-tycoon.vercel.app](https://agrim-tycoon.vercel.app/)
 - **Repository:** [github.com/sayyidkhan/agrim-tycoon](https://github.com/sayyidkhan/agrim-tycoon)
 - **Track:** Best Use of Gemma
 - **Gemma proof:** a bundled local GGUF model, served by `llama.cpp`, returns structured incident triage and the Machine City guardrail branch.
