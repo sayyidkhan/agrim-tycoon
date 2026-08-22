@@ -7,9 +7,9 @@ import styles from "./landing.module.css";
 type SummaryPhase = "typing" | "holding" | "deleting" | "waiting";
 
 const DEFAULT_MAC_DOWNLOAD_URL =
-  "https://github.com/sayyidkhan/agrim-tycoon/releases/download/v0.1.0/AgrimTycoon-0.1.0-arm64.dmg";
+  "https://github.com/sayyidkhan/agrim-tycoon/releases";
 const MAC_DOWNLOAD_URL =
-  process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL ?? DEFAULT_MAC_DOWNLOAD_URL;
+  process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL || DEFAULT_MAC_DOWNLOAD_URL;
 
 const SUMMARY =
   "Protect the community. Teach the builders. Ship something brilliant before Elon asks twice.";

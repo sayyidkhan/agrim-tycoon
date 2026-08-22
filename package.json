@@ -20,7 +20,7 @@
     "desktop:prepare-runtime": "node scripts/prepare-desktop-runtime.mjs",
     "desktop:build": "npm run desktop:sidecar:build && npm run desktop:prepare-runtime && tauri build --bundles dmg",
     "test": "npm run build:cloudflare && node --test tests/rendered-html.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern dist-desktop --ignore-pattern .next --ignore-pattern src-tauri/target",
+    "lint": "eslint . --ignore-pattern artifacts --ignore-pattern dist --ignore-pattern dist-desktop --ignore-pattern .next --ignore-pattern src-tauri/target",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
