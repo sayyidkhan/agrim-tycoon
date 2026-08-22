@@ -99,6 +99,35 @@
   color: var(--muted);
 }
 
+.githubLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.githubLink svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.githubLink:hover {
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.githubLink:focus-visible {
+  outline-offset: 5px;
+}
+
 .menu {
   position: absolute;
   z-index: 2;
@@ -1997,7 +2026,8 @@
   }
 
   .wordmark > span:last-child,
-  .issue {
+  .issue,
+  .githubLink {
     display: none;
   }
 
