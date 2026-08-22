@@ -316,7 +316,9 @@ export function LandingExperience() {
 
         <div className={styles.landingTagline}>
           <p>Build the city. Tame the AI. Stay mayor.</p>
-          <span>Can you be a better mayor than Agrim?</span>
+          <span>
+            Can you be a <strong className={styles.mayorHighlight}>better mayor</strong> than Agrim?
+          </span>
         </div>
 
         <div
