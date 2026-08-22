@@ -324,8 +324,8 @@ export function LandingExperience() {
         </div>
 
         <div className={styles.landingTagline}>
-          <p>Build. Recruit. Grow.</p>
-          <span>The Innovation City flywheel</span>
+          <p>Build the city. Tame the AI. Stay mayor.</p>
+          <span>Can you be a better mayor than Agrim?</span>
         </div>
 
         <div
@@ -345,6 +345,24 @@ export function LandingExperience() {
               <span>Jobs</span>
             </span>
             <span className={styles.jobMarks}>
+              <a
+                className={styles.jobIdentity}
+                href="https://www.spacex.com/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Visit SpaceX website"
+              >
+                <span className={`${styles.jobMark} ${styles.jobMarkSpace}`}>
+                  <Image
+                    src="/images/spacex-logo.png"
+                    alt=""
+                    fill
+                    unoptimized
+                    sizes="64px"
+                  />
+                </span>
+                <span className={styles.jobName}>SpaceX</span>
+              </a>
               <a
                 className={styles.jobIdentity}
                 href="https://www.65labs.org/"
@@ -380,24 +398,6 @@ export function LandingExperience() {
                   />
                 </span>
                 <span className={styles.jobName}>Code with AI</span>
-              </a>
-              <a
-                className={styles.jobIdentity}
-                href="https://www.spacex.com/"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Visit SpaceX website"
-              >
-                <span className={`${styles.jobMark} ${styles.jobMarkSpace}`}>
-                  <Image
-                    src="/images/spacex-logo.png"
-                    alt=""
-                    fill
-                    unoptimized
-                    sizes="64px"
-                  />
-                </span>
-                <span className={styles.jobName}>SpaceX</span>
               </a>
             </span>
           </div>
