@@ -323,6 +323,11 @@ export function LandingExperience() {
           </span>
         </div>
 
+        <div className={styles.landingTagline}>
+          <p>Build. Recruit. Grow.</p>
+          <span>The Innovation City flywheel</span>
+        </div>
+
         <div
           className={styles.stakes}
           aria-label="One week. Three jobs. Zero time."
@@ -447,9 +452,9 @@ export function LandingExperience() {
 
       <footer className={styles.footer}>
         <div className={styles.roles} aria-label="Agrim's three roles">
+          <span>SpaceXAI</span>
           <span>65labs</span>
           <span>Code with AI</span>
-          <span>SpaceXAI</span>
         </div>
         <div className={styles.models} aria-label="Powered by artificial intelligence models">
           <span>Local intelligence by Gemma</span>
@@ -463,7 +468,7 @@ export function LandingExperience() {
         <div className={styles.modalBackdrop} role="presentation" onMouseDown={closeGuide}>
           <section
             ref={modalRef}
-            className={styles.modal}
+            className={`${styles.modal} ${styles.guideModal}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="guide-title"
@@ -484,41 +489,82 @@ export function LandingExperience() {
             </header>
 
             <div className={styles.modalBody}>
-              <p className={styles.modalEyebrow}>Your objective</p>
-              <h2 id="guide-title">Survive one impossible week.</h2>
+              <p className={styles.modalEyebrow}>The grand vision</p>
+              <h2 id="guide-title">Become Mayor of Innovation City.</h2>
               <p id="guide-description" className={styles.modalIntro}>
-                Keep all three worlds moving without running Agrim into the ground.
+                Two outcomes: build the next-generation Innovation City—or be
+                owned by the AI meant to run it. Win the mayorship, keep it,
+                and balance the city&apos;s people, skills, and machines.
               </p>
 
               <ol className={styles.instructions}>
                 <li>
-                  <span>01</span>
-                  <div>
-                    <strong>Choose what matters</strong>
-                    <p>Move between community, classroom, and SpaceXAI crises.</p>
+                  <div className={styles.missionArtwork}>
+                    <Image
+                      src="/images/field-manual-machines.jpg"
+                      alt="A human operator building and directing a vast AI-run robotics and aerospace city in 2077"
+                      fill
+                      unoptimized
+                      sizes="(max-width: 980px) 45vw, 30vw"
+                    />
+                    <span className={styles.missionNumber}>01</span>
+                  </div>
+                  <div className={styles.missionCopy}>
+                    <span className={styles.missionLabel}>SpaceXAI · Machine city</span>
+                    <strong>Build the machines</strong>
+                    <p>
+                      Build the systems that make Innovation City real—then make
+                      sure every machine still answers to people.
+                    </p>
                   </div>
                 </li>
                 <li>
-                  <span>02</span>
-                  <div>
-                    <strong>Make the call</strong>
-                    <p>Act yourself or trust Gemma to handle the queue.</p>
+                  <div className={styles.missionArtwork}>
+                    <Image
+                      src="/images/field-manual-recruit.jpg"
+                      alt="Researchers and applied AI innovators entering a futuristic civic recruitment forum"
+                      fill
+                      unoptimized
+                      sizes="(max-width: 980px) 45vw, 30vw"
+                    />
+                    <span className={styles.missionNumber}>02</span>
+                  </div>
+                  <div className={styles.missionCopy}>
+                    <span className={styles.missionLabel}>65labs · Talent network</span>
+                    <strong>Recruit the researchers</strong>
+                    <p>
+                      Discover, onboard, and activate the researchers and applied
+                      AI innovators who will drive the city&apos;s next era.
+                    </p>
                   </div>
                 </li>
                 <li>
-                  <span>03</span>
-                  <div>
-                    <strong>Protect your energy</strong>
-                    <p>Every decision costs time. Neglected problems get worse.</p>
+                  <div className={styles.missionArtwork}>
+                    <Image
+                      src="/images/field-manual-hitl.jpg"
+                      alt="Human operators steering and verifying autonomous AI systems in a futuristic command academy"
+                      fill
+                      unoptimized
+                      sizes="(max-width: 980px) 45vw, 30vw"
+                    />
+                    <span className={styles.missionNumber}>03</span>
+                  </div>
+                  <div className={styles.missionCopy}>
+                    <span className={styles.missionLabel}>Code With AI · Builder academy</span>
+                    <strong>Grow the builders</strong>
+                    <p>
+                      Turn curiosity into capability. Train people to steer
+                      agents, challenge decisions, and ship what the city needs.
+                    </p>
                   </div>
                 </li>
               </ol>
             </div>
 
             <div className={styles.modalFooter}>
-              <p>Good luck, operator.</p>
+              <p>Good luck, Mayor.</p>
               <button type="button" onClick={startFromGuide}>
-                Start the week <span aria-hidden="true">↗</span>
+                Begin your term <span aria-hidden="true">↗</span>
               </button>
             </div>
           </section>
@@ -628,27 +674,27 @@ export function LandingExperience() {
                       </p>
                       <div className={styles.presentRoles} id="backstory-intro">
                         <article>
-                          <span>01 · 65LABS</span>
-                          <h3>Protect the community.</h3>
+                          <span>01 · SPACEX AI</span>
+                          <h3>Build the impossible.</h3>
+                          <p>
+                            At mission control, ambitious ideas only matter when they
+                            become useful systems—fast.
+                          </p>
+                        </article>
+                        <article>
+                          <span>02 · 65LABS</span>
+                          <h3>Recruit the community.</h3>
                           <p>
                             Create rooms where AI builders can meet, learn and build—
                             while keeping spam, scams and empty hype outside.
                           </p>
                         </article>
                         <article>
-                          <span>02 · CODE WITH AI</span>
-                          <h3>Teach people to ship.</h3>
+                          <span>03 · CODE WITH AI</span>
+                          <h3>Grow people who ship.</h3>
                           <p>
                             Help beginners move from zero to a working app using
                             modern AI-assisted coding tools.
-                          </p>
-                        </article>
-                        <article>
-                          <span>03 · SPACEX AI</span>
-                          <h3>Build the impossible.</h3>
-                          <p>
-                            At mission control, ambitious ideas only matter when they
-                            become useful systems—fast.
                           </p>
                         </article>
                       </div>

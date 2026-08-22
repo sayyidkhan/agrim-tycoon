@@ -23,7 +23,7 @@ interface Outcome {
   degraded?: boolean;
 }
 
-const stations = Object.keys(stationMeta) as StationId[];
+const stations: StationId[] = ["spacex", "community", "teaching"];
 const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const statLabels: Array<{ key: keyof GameStats; label: string; code: string }> = [
   { key: "community", label: "Community", code: "65" },
@@ -33,9 +33,9 @@ const statLabels: Array<{ key: keyof GameStats; label: string; code: string }> =
 ];
 
 const stationVisuals: Record<StationId, { desk: string; displayName: string }> = {
-  community: { desk: "COMMUNITY COMMAND", displayName: "65labs" },
-  teaching: { desk: "BUILDER CLASSROOM", displayName: "Code with AI" },
   spacex: { desk: "MISSION SYSTEMS", displayName: "SpaceX AI" },
+  community: { desk: "TALENT NETWORK", displayName: "65labs" },
+  teaching: { desk: "BUILDER ACADEMY", displayName: "Code with AI" },
 };
 
 function applyEffects(stats: GameStats, effects: Partial<GameStats>): GameStats {
@@ -204,9 +204,9 @@ export function GameExperience() {
             code: string;
             texture: string;
           }> = [
-            { id: "community", x: margin + roomWidth / 2, color: 0xff6238, label: "65LABS", code: "COMMUNITY COMMAND", texture: "65labs" },
-            { id: "teaching", x: margin + roomWidth * 1.5 + roomGap, color: 0x54c8ff, label: "CODE WITH AI", code: "BUILDER CLASSROOM", texture: "code" },
-            { id: "spacex", x: margin + roomWidth * 2.5 + roomGap * 2, color: 0xf0be3d, label: "SPACEX AI", code: "MISSION SYSTEMS", texture: "spacex" },
+            { id: "spacex", x: margin + roomWidth / 2, color: 0xf0be3d, label: "SPACEX AI", code: "BUILD · MISSION SYSTEMS", texture: "spacex" },
+            { id: "community", x: margin + roomWidth * 1.5 + roomGap, color: 0xff6238, label: "65LABS", code: "RECRUIT · TALENT NETWORK", texture: "65labs" },
+            { id: "teaching", x: margin + roomWidth * 2.5 + roomGap * 2, color: 0x54c8ff, label: "CODE WITH AI", code: "GROW · BUILDER ACADEMY", texture: "code" },
           ];
 
           stageStations.forEach((station, stationIndex) => {
