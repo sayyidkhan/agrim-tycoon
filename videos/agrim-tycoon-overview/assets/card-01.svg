@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+  <rect width="1920" height="1080" fill="#12241c" fill-opacity="0.80"/>
+  <rect x="90" y="80" width="760" height="920" fill="#12241c" fill-opacity="0.88" stroke="#e4b747" stroke-width="4"/>
+  <text x="140" y="150" fill="#e4b747" font-family="Arial" font-size="26" letter-spacing="8">01 / INNOVATION CITY</text>
+  <text x="140" y="330" fill="#f2efe8" font-family="Arial" font-size="68" letter-spacing="14">WELCOME TO</text>
+  <text x="140" y="495" fill="#e4b747" font-family="Arial" font-size="150" font-weight="bold">AGRIM</text>
+  <text x="140" y="640" fill="#f2efe8" font-family="Arial" font-size="132" font-weight="bold">TYCOON</text>
+  <line x1="140" y1="735" x2="700" y2="735" stroke="#e4b747" stroke-width="6"/>
+  <text x="140" y="820" fill="#f2efe8" font-family="Arial" font-size="46" font-weight="bold">BUILD THE CITY.</text>
+  <text x="140" y="885" fill="#f2efe8" font-family="Arial" font-size="46" font-weight="bold">KEEP IT HUMAN.</text>
+</svg>

@@ -1,804 +1,442 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  clampStat,
-  endingFor,
-  initialStats,
-  scenarios,
-  stationMeta,
-  type GameStats,
-  type ScenarioChoice,
-  type StationId,
-} from "@/lib/game/scenarios";
-import {
-  requestGemma,
-  requestWorldConsequence,
-  type GemmaElonResponse,
-  type GemmaTriageResponse,
-} from "@/lib/client/ai";
+import { useEffect, useRef, useState } from "react";
+import { requestGemma, type GemmaTriageResponse } from "@/lib/client/ai";
 import styles from "./game.module.css";
 
-type Phase = "briefing" | "playing" | "resolving" | "finished";
+type BusinessId = "machine" | "community" | "academy";
 
-interface GameExperienceProps {
-  onExit?: () => void;
+interface CityState {
+  funds: number;
+  residents: number;
+  food: number;
+  materials: number;
+  power: number;
+  trust: number;
+  innovation: number;
+  wellbeing: number;
 }
 
-interface Outcome {
+interface Business {
+  id: BusinessId;
+  index: string;
+  title: string;
+  sector: string;
+  location: string;
+  action: string;
+  summary: string;
+  effects: Partial<CityState>;
+  status: string;
+  artwork: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  cost: number;
+  materialCost: number;
+  detail: string;
+  effects: Partial<CityState>;
+}
+
+interface Incident {
+  title: string;
   eyebrow: string;
-  headline: string;
-  narrative: string;
-  hook?: string;
-  effects?: Partial<GameStats>;
-  degraded?: boolean;
+  detail: string;
+  choices: Array<{ label: string; detail: string; effects: Partial<CityState> }>;
 }
 
-const stations: StationId[] = ["spacex", "community", "teaching"];
-const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-const statLabels: Array<{ key: keyof GameStats; label: string; code: string }> = [
-  { key: "community", label: "Community", code: "65" },
-  { key: "students", label: "Builders", code: "AI" },
-  { key: "elon", label: "Elon alignment", code: "X" },
-  { key: "control", label: "Civic control", code: "H" },
-  { key: "energy", label: "Energy", code: "⚡" },
+interface LogEntry {
+  id: number;
+  day: number;
+  text: string;
+}
+
+const businesses: Business[] = [
+  {
+    id: "machine",
+    index: "01",
+    title: "Machine City",
+    sector: "Robotics & resources",
+    location: "Frontier operations",
+    action: "Deploy harvest crew",
+    summary: "Route autonomous crews through the agricultural belt before the next city cycle.",
+    effects: { food: 16, materials: 7, power: -5, innovation: 2 },
+    status: "6 field units ready",
+    artwork: "/images/field-manual-machines.jpg",
+  },
+  {
+    id: "community",
+    index: "02",
+    title: "65labs",
+    sector: "Community & talent",
+    location: "Civic market quarter",
+    action: "Host a resident assembly",
+    summary: "Put people, operators, and researchers in the same room before a city decision hardens.",
+    effects: { trust: 9, wellbeing: 5, funds: -9 },
+    status: "Assembly hall open",
+    artwork: "/images/field-manual-recruit.jpg",
+  },
+  {
+    id: "academy",
+    index: "03",
+    title: "Builder Academy",
+    sector: "Applied AI & learning",
+    location: "Learning campus",
+    action: "Run a civic builder sprint",
+    summary: "Give builder teams one real city constraint and ship the useful version with oversight.",
+    effects: { innovation: 10, trust: 3, funds: -8, power: -2 },
+    status: "Cohort awaiting brief",
+    artwork: "/images/field-manual-hitl.jpg",
+  },
 ];
 
-const stationVisuals: Record<StationId, { desk: string; displayName: string }> = {
-  spacex: { desk: "MACHINE CITY", displayName: "Machine City" },
-  community: { desk: "TALENT NETWORK", displayName: "Talent Network" },
-  teaching: { desk: "BUILDER ACADEMY", displayName: "Builder Academy" },
-};
+const projects: Project[] = [
+  { id: "water", name: "Water reclamation loop", cost: 18, materialCost: 6, detail: "Stabilises harvests during dry cycles.", effects: { food: 8, trust: 3, wellbeing: 2 } },
+  { id: "transit", name: "Electric tram link", cost: 24, materialCost: 9, detail: "Connects the campus, market and city centre.", effects: { residents: 60, wellbeing: 5, power: -3 } },
+  { id: "commons", name: "Public model commons", cost: 20, materialCost: 4, detail: "A place to inspect and appeal civic systems.", effects: { trust: 9, innovation: 4 } },
+];
 
-function applyEffects(stats: GameStats, effects: Partial<GameStats>): GameStats {
+const incidents: Incident[] = [
+  {
+    eyebrow: "Frontier signal · water stress",
+    title: "The harvest forecast is turning dry.",
+    detail: "Field robots can protect output, but they will draw down city power. The other option keeps reserves stable and accepts a leaner harvest.",
+    choices: [
+      { label: "Protect the harvest", detail: "Prioritise irrigation and robot hours.", effects: { food: 14, power: -7, wellbeing: -2 } },
+      { label: "Hold city reserves", detail: "Preserve power for homes and transit.", effects: { trust: 4, power: 3, food: -7 } },
+    ],
+  },
+  {
+    eyebrow: "Civic signal · public review",
+    title: "Residents want to inspect the transit algorithm.",
+    detail: "The model can reduce congestion today. The city needs to decide whether an appeal route is part of launch day.",
+    choices: [
+      { label: "Open public review", detail: "Launch with an appeal path and clear explanation.", effects: { trust: 10, innovation: 3, funds: -7 } },
+      { label: "Ship the fast version", detail: "Optimise the rollout while feedback follows.", effects: { innovation: 8, wellbeing: 2, trust: -7 } },
+    ],
+  },
+  {
+    eyebrow: "Builder signal · next challenge",
+    title: "The academy is choosing its next city brief.",
+    detail: "Teams can build a headline demo for investors or tools for the heat-stressed neighbourhoods.",
+    choices: [
+      { label: "Fund neighbourhood tools", detail: "Put the next cohort on a practical civic problem.", effects: { innovation: 7, trust: 7, wellbeing: 3 } },
+      { label: "Back the growth demo", detail: "Use the cohort to attract more city capital.", effects: { funds: 12, innovation: 5, trust: -4 } },
+    ],
+  },
+];
+
+function clamp(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function applyState(current: CityState, effects: Partial<CityState>): CityState {
   return {
-    community: clampStat(stats.community + (effects.community ?? 0)),
-    students: clampStat(stats.students + (effects.students ?? 0)),
-    elon: clampStat(stats.elon + (effects.elon ?? 0)),
-    control: clampStat(stats.control + (effects.control ?? 0)),
-    energy: clampStat(stats.energy + (effects.energy ?? 0)),
+    funds: Math.max(0, current.funds + (effects.funds ?? 0)),
+    residents: Math.max(0, current.residents + (effects.residents ?? 0)),
+    food: Math.max(0, current.food + (effects.food ?? 0)),
+    materials: Math.max(0, current.materials + (effects.materials ?? 0)),
+    power: clamp(current.power + (effects.power ?? 0)),
+    trust: clamp(current.trust + (effects.trust ?? 0)),
+    innovation: clamp(current.innovation + (effects.innovation ?? 0)),
+    wellbeing: clamp(current.wellbeing + (effects.wellbeing ?? 0)),
   };
 }
 
-function mergeEffects(...groups: Array<Partial<GameStats>>): Partial<GameStats> {
-  return groups.reduce<Partial<GameStats>>((combined, group) => {
-    for (const key of Object.keys(group) as Array<keyof GameStats>) {
-      combined[key] = (combined[key] ?? 0) + (group[key] ?? 0);
-    }
-    return combined;
-  }, {});
+function effectLabel(effects: Partial<CityState>) {
+  return Object.entries(effects)
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${key} ${Number(value) > 0 ? "+" : ""}${value}`)
+    .join(" · ");
 }
 
-function stationRole(station: StationId): "community" | "teaching" | "spacex" {
-  return station;
+function effectChips(effects: Partial<CityState>) {
+  return Object.entries(effects).filter(([, value]) => value) as Array<[string, number]>;
 }
 
-function moveAgrim(station: StationId | "center") {
-  window.dispatchEvent(new CustomEvent("agrim:move", { detail: station }));
-}
+const GAUGE_CIRCUMFERENCE = 2 * Math.PI * 26;
 
-function impactEntries(effects: Partial<GameStats>) {
-  return (Object.entries(effects) as Array<[keyof GameStats, number]>).filter(([, value]) => value !== 0);
-}
+export function GameExperience({ onExit }: { onExit?: () => void }) {
+  const [city, setCity] = useState<CityState>({ funds: 178, residents: 680, food: 62, materials: 44, power: 78, trust: 58, innovation: 47, wellbeing: 64 });
+  const [day, setDay] = useState(1);
+  const [activeId, setActiveId] = useState<BusinessId>("machine");
+  const [completed, setCompleted] = useState<BusinessId[]>([]);
+  const [built, setBuilt] = useState<string[]>([]);
+  const [incident, setIncident] = useState<Incident | null>(null);
+  const [log, setLog] = useState<LogEntry[]>([{ id: 0, day: 1, text: "Dawn over Innovation City. The frontier crews are online and the city is ready for a mayoral brief." }]);
+  const [pulses, setPulses] = useState<Partial<CityState>>({});
+  const [cycleFlash, setCycleFlash] = useState<string | null>(null);
+  const [advisor, setAdvisor] = useState<{ title: string; detail: string; degraded?: boolean } | null>(null);
+  const [advising, setAdvising] = useState(false);
 
-function impactLabel(key: keyof GameStats) {
-  return { community: "Community", students: "Builders", elon: "Elon", control: "Control", energy: "Energy" }[key];
-}
+  const logId = useRef(1);
+  const pulseTimer = useRef<number | undefined>(undefined);
+  const flashTimer = useRef<number | undefined>(undefined);
+  const incidentTimer = useRef<number | undefined>(undefined);
 
-export function GameExperience({ onExit }: GameExperienceProps) {
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const advanceTimer = useRef<number | null>(null);
-  const [taskIndex, setTaskIndex] = useState(0);
-  const [stats, setStats] = useState<GameStats>(initialStats);
-  const [selectedStation, setSelectedStation] = useState<StationId | null>(null);
-  const [phase, setPhase] = useState<Phase>("briefing");
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
-  const scenario = scenarios[taskIndex];
-  const [secondsLeft, setSecondsLeft] = useState(scenario?.timeout ?? 0);
-
-  const endGame = useCallback((nextStats: GameStats) => {
-    setStats(nextStats);
-    setPhase("finished");
-    setSelectedStation(null);
-    moveAgrim("center");
+  useEffect(() => () => {
+    window.clearTimeout(pulseTimer.current);
+    window.clearTimeout(flashTimer.current);
+    window.clearTimeout(incidentTimer.current);
   }, []);
 
-  const advance = useCallback(
-    (nextStats: GameStats) => {
-      const nextIndex = taskIndex + 1;
-      if (nextStats.energy <= 0 || nextIndex >= scenarios.length) {
-        endGame(nextStats);
-        return;
-      }
-      setTaskIndex(nextIndex);
-      setSecondsLeft(scenarios[nextIndex].timeout);
-      setSelectedStation(null);
-      setOutcome(null);
-      setPhase("playing");
-      moveAgrim("center");
-    },
-    [endGame, taskIndex],
-  );
+  const active = businesses.find((business) => business.id === activeId)!;
+  const cityHealth = Math.round((city.power + city.trust + city.innovation + city.wellbeing) / 4);
 
-  const scheduleAdvance = useCallback(
-    (nextStats: GameStats) => {
-      if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
-      advanceTimer.current = window.setTimeout(() => advance(nextStats), 3000);
-    },
-    [advance],
-  );
-
-  const expireTask = useCallback(() => {
-    if (!scenario || phase !== "playing") return;
-    const nextStats = applyEffects(stats, scenario.neglect);
-    setStats(nextStats);
-    setPhase("resolving");
-    setOutcome({
-      eyebrow: "Critical request missed",
-      headline: `${stationMeta[scenario.station].shortLabel} remembers.`,
-      narrative: "The alert disappeared. The consequence did not. Another world moved while Agrim was elsewhere.",
-      effects: scenario.neglect,
-      degraded: true,
-    });
-    scheduleAdvance(nextStats);
-  }, [phase, scenario, scheduleAdvance, stats]);
-
-  useEffect(() => {
-    if (phase !== "playing" || !scenario) return;
-    const timer = window.setInterval(() => {
-      setSecondsLeft((current) => {
-        if (current <= 1) {
-          window.clearInterval(timer);
-          window.setTimeout(expireTask, 0);
-          return 0;
-        }
-        return current - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [expireTask, phase, scenario]);
-
-  useEffect(() => {
-    return () => {
-      if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    let disposed = false;
-    let game: { destroy: (removeCanvas: boolean, noReturn?: boolean) => void } | null = null;
-    let cleanupMove: (() => void) | null = null;
-
-    async function mountScene() {
-      if (!canvasRef.current) return;
-      const phaserModule = await import("phaser");
-      if (disposed || !canvasRef.current) return;
-      const Phaser = phaserModule.default;
-
-      class OperationsScene extends Phaser.Scene {
-        private operator?: Phaser.GameObjects.Container;
-        private travelLine?: Phaser.GameObjects.Graphics;
-        private stationFrames = new Map<StationId, Phaser.GameObjects.Rectangle>();
-        private stationBeacons = new Map<StationId, Phaser.GameObjects.Arc>();
-
-        constructor() {
-          super("operations");
-        }
-
-        preload() {
-          this.load.image("agrim", "/images/agrim-tech-overlord-logo.png");
-          this.load.image("65labs", "/images/65labs-logo.png");
-          this.load.image("code", "/images/code-with-ai-logo.png");
-          this.load.image("spacex", "/images/spacex-logo.png");
-        }
-
-        create() {
-          const width = this.scale.width;
-          const height = this.scale.height;
-          const floorTop = Math.min(150, height * 0.18);
-          const floorBottom = height - 40;
-          const margin = Math.max(18, width * 0.025);
-          const roomGap = Math.max(10, width * 0.012);
-          const roomWidth = (width - margin * 2 - roomGap * 2) / 3;
-          const roomTop = floorTop + 20;
-          const roomHeight = Math.max(310, floorBottom - roomTop - 110);
-          const graphics = this.add.graphics();
-
-          graphics.fillStyle(0x0d0e0e, 1);
-          graphics.fillRect(0, 0, width, height);
-          graphics.fillStyle(0x111413, 1);
-          graphics.fillRect(0, floorTop, width, floorBottom - floorTop);
-
-          for (let x = 0; x <= width; x += 48) {
-            graphics.lineStyle(1, 0xffffff, x % 192 === 0 ? 0.06 : 0.025);
-            graphics.lineBetween(x, floorTop, x, floorBottom);
-          }
-          for (let y = floorTop; y <= floorBottom; y += 42) {
-            graphics.lineStyle(1, 0xffffff, 0.03);
-            graphics.lineBetween(0, y, width, y);
-          }
-
-          const stageStations: Array<{
-            id: StationId;
-            x: number;
-            color: number;
-            label: string;
-            code: string;
-            texture: string;
-          }> = [
-            { id: "spacex", x: margin + roomWidth / 2, color: 0xf0be3d, label: "SPACEX AI", code: "BUILD · MISSION SYSTEMS", texture: "spacex" },
-            { id: "community", x: margin + roomWidth * 1.5 + roomGap, color: 0xff6238, label: "65LABS", code: "RECRUIT · TALENT NETWORK", texture: "65labs" },
-            { id: "teaching", x: margin + roomWidth * 2.5 + roomGap * 2, color: 0x54c8ff, label: "CODE WITH AI", code: "GROW · BUILDER ACADEMY", texture: "code" },
-          ];
-
-          stageStations.forEach((station, stationIndex) => {
-            const left = station.x - roomWidth / 2;
-            const frame = this.add.rectangle(station.x, roomTop + roomHeight / 2, roomWidth, roomHeight, station.color, 0.055)
-              .setStrokeStyle(2, station.color, 0.42);
-            this.stationFrames.set(station.id, frame);
-
-            const roomAura = this.add.rectangle(station.x, roomTop + roomHeight / 2, roomWidth - 8, roomHeight - 8, station.color, 0.018);
-            this.tweens.add({
-              targets: roomAura,
-              alpha: 0.09,
-              duration: 1800 + stationIndex * 420,
-              yoyo: true,
-              repeat: -1,
-              ease: "Sine.easeInOut",
-            });
-
-            const tint = this.add.rectangle(left + 4, roomTop + roomHeight / 2, 7, roomHeight - 4, station.color, 0.9);
-            tint.setOrigin(0.5);
-            const beacon = this.add.circle(left + roomWidth - 25, roomTop + 24, 6, station.color, 0.24)
-              .setStrokeStyle(1, station.color, 0.5);
-            this.stationBeacons.set(station.id, beacon);
-
-            this.add.text(left + 21, roomTop + 17, `0${stationIndex + 1} / ${station.code}`, {
-              fontFamily: "monospace",
-              fontSize: `${Math.max(9, Math.min(12, width / 120))}px`,
-              color: `#${station.color.toString(16).padStart(6, "0")}`,
-              letterSpacing: 2,
-            });
-
-            const logo = this.add.image(station.x, roomTop + 67, station.texture).setOrigin(0.5);
-            if (station.id === "community") logo.setDisplaySize(Math.min(132, roomWidth * 0.42), Math.min(53, roomWidth * 0.17));
-            if (station.id === "teaching") logo.setDisplaySize(55, 55);
-            if (station.id === "spacex") logo.setCrop(38, 185, 660, 185).setDisplaySize(Math.min(190, roomWidth * 0.56), 52);
-
-            const propTop = roomTop + 112;
-            const usableWidth = roomWidth - 44;
-            if (station.id === "community") {
-              const people: Phaser.GameObjects.Container[] = [];
-              for (let person = 0; person < 7; person += 1) {
-                const px = left + 42 + (person % 4) * (usableWidth / 4);
-                const py = propTop + 55 + Math.floor(person / 4) * 75;
-                const head = this.add.circle(0, -12, 9, person % 2 ? 0xe4b28c : 0xb77b58, 1);
-                const body = this.add.rectangle(0, 8, 25, 31, person % 3 === 0 ? station.color : 0x3b4140, 1).setStrokeStyle(1, 0xffffff, 0.12);
-                const personNode = this.add.container(px, py, [body, head]);
-                people.push(personNode);
-                this.tweens.add({ targets: personNode, y: py - 4, duration: 900 + person * 120, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-              }
-              for (let bubble = 0; bubble < 3; bubble += 1) {
-                const bubbleNode = this.add.rectangle(left + 55 + bubble * (usableWidth / 3), propTop + bubble * 18, 52, 20, 0xf4f0e7, 0.1).setStrokeStyle(1, station.color, 0.3);
-                this.tweens.add({ targets: bubbleNode, alpha: 0.35, duration: 650 + bubble * 240, yoyo: true, repeat: -1 });
-              }
-              this.add.text(left + 22, roomTop + roomHeight - 49, "327 ONLINE  /  04 FLAGS  /  SIGNAL 92%", { fontFamily: "monospace", fontSize: "9px", color: "#ff8067" });
-            }
-
-            if (station.id === "teaching") {
-              const screenY = propTop + 2;
-              graphics.fillStyle(0x13191a, 1);
-              graphics.fillRoundedRect(left + 25, screenY, usableWidth - 6, 92, 5);
-              graphics.lineStyle(1, station.color, 0.35);
-              graphics.strokeRoundedRect(left + 25, screenY, usableWidth - 6, 92, 5);
-              for (let line = 0; line < 5; line += 1) {
-                const codeLine = this.add.rectangle(left + 43, screenY + 18 + line * 13, Math.max(32, usableWidth * (0.62 - line * 0.07)), 3, line === 1 ? station.color : 0xb8c2c1, line === 1 ? 0.8 : 0.3).setOrigin(0, 0.5);
-                this.tweens.add({ targets: codeLine, scaleX: 0.55, duration: 1100 + line * 190, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-              }
-              for (let desk = 0; desk < 4; desk += 1) {
-                const dx = left + 42 + (desk % 2) * (usableWidth / 2);
-                const dy = screenY + 132 + Math.floor(desk / 2) * 62;
-                graphics.fillStyle(0x282e2e, 1);
-                graphics.fillRoundedRect(dx, dy, Math.max(55, usableWidth * 0.34), 32, 3);
-                graphics.fillStyle(station.color, 0.45);
-                graphics.fillRect(dx + 10, dy + 8, Math.max(28, usableWidth * 0.2), 3);
-              }
-              this.add.text(left + 22, roomTop + roomHeight - 49, "48 BUILDERS  /  31 SHIPPED  /  COHORT LIVE", { fontFamily: "monospace", fontSize: "9px", color: "#7bd9ff" });
-            }
-
-            if (station.id === "spacex") {
-              const windowRadius = Math.min(72, roomWidth * 0.23);
-              const windowX = station.x;
-              const windowY = propTop + 65;
-              const spaceWindow = this.add.circle(windowX, windowY, windowRadius, 0x030608, 1).setStrokeStyle(2, station.color, 0.35);
-              for (let star = 0; star < 18; star += 1) {
-                const angle = (star / 18) * Math.PI * 2;
-                const distance = 18 + ((star * 23) % Math.max(20, windowRadius - 14));
-                const starNode = this.add.circle(windowX + Math.cos(angle) * distance, windowY + Math.sin(angle) * distance, star % 4 === 0 ? 2 : 1, 0xffffff, 0.45 + (star % 3) * 0.15);
-                this.tweens.add({ targets: starNode, alpha: 0.1, duration: 700 + star * 70, yoyo: true, repeat: -1 });
-              }
-              const rocket = this.add.graphics();
-              rocket.fillStyle(0xece9e1, 1);
-              rocket.fillRoundedRect(windowX - 5, windowY - 30, 10, 44, 5);
-              rocket.fillTriangle(windowX - 5, windowY - 26, windowX, windowY - 39, windowX + 5, windowY - 26);
-              rocket.fillStyle(station.color, 0.95);
-              rocket.fillTriangle(windowX - 5, windowY + 10, windowX, windowY + 31, windowX + 5, windowY + 10);
-              this.tweens.add({ targets: rocket, y: -8, duration: 1250, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-              this.add.text(left + 22, roomTop + roomHeight - 49, "FLIGHT AI  /  T−00:42  /  SYSTEMS NOMINAL", { fontFamily: "monospace", fontSize: "9px", color: "#f0be3d" });
-              void spaceWindow;
-            }
-
-            this.add.text(station.x, roomTop + roomHeight - 17, station.label, {
-              fontFamily: "Arial",
-              fontSize: `${Math.max(13, Math.min(17, width / 95))}px`,
-              fontStyle: "bold",
-              color: "#f4f0e7",
-              letterSpacing: 1,
-            }).setOrigin(0.5, 1);
-          });
-
-          const travelY = Math.min(floorBottom - 70, roomTop + roomHeight + 56);
-          graphics.lineStyle(2, 0xffffff, 0.13);
-          graphics.lineBetween(margin + 20, travelY, width - margin - 20, travelY);
-          for (let dash = margin + 25; dash < width - margin; dash += 54) {
-            graphics.fillStyle(0xf4f0e7, 0.09);
-            graphics.fillRect(dash, travelY - 2, 24, 4);
-          }
-          this.travelLine = this.add.graphics();
-
-          const operatorGlow = this.add.circle(0, 0, 55, 0xffa228, 0.12);
-          const body = this.add.rectangle(0, 24, 42, 50, 0x11110f, 1).setStrokeStyle(2, 0xffa228, 0.75);
-          const operatorRing = this.add.circle(0, -15, 35, 0x11110f, 0.98).setStrokeStyle(2, 0xffa228, 0.8);
-          const portrait = this.add.image(0, -15, "agrim").setDisplaySize(61, 61);
-          const status = this.add.text(0, 61, "AGRIM / MOVING", {
-            fontFamily: "monospace",
-            fontSize: "9px",
-            color: "#f4f0e7",
-            backgroundColor: "#11110f",
-            padding: { x: 8, y: 4 },
-          }).setOrigin(0.5);
-          this.operator = this.add.container(width * 0.5, travelY, [operatorGlow, body, operatorRing, portrait, status]);
-          this.operator.setDepth(20);
-
-          this.tweens.add({
-            targets: operatorGlow,
-            scale: 1.28,
-            alpha: 0.025,
-            duration: 1150,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.easeInOut",
-          });
-
-          const positionFor = (target: StationId | "center") => {
-            if (target === "center") return width * 0.5;
-            return stageStations.find((station) => station.id === target)?.x ?? width * 0.5;
-          };
-          const onMove = (event: Event) => {
-            const target = (event as CustomEvent<StationId | "center">).detail;
-            const targetX = positionFor(target);
-            const startX = this.operator?.x ?? width * 0.5;
-            for (let trail = 0; trail < 5; trail += 1) {
-              const trailDot = this.add.circle(startX, travelY, 8 - trail, 0xffa228, 0.22).setDepth(18);
-              this.tweens.add({ targets: trailDot, x: targetX, alpha: 0, scale: 0.2, delay: trail * 70, duration: 650, onComplete: () => trailDot.destroy() });
-            }
-            this.travelLine?.clear();
-            this.travelLine?.lineStyle(2, 0xffa228, 0.55);
-            this.travelLine?.lineBetween(startX, travelY, targetX, travelY);
-            this.tweens.add({
-              targets: this.operator,
-              x: targetX,
-              duration: 720,
-              ease: "Back.easeInOut",
-              onComplete: () => {
-                this.travelLine?.clear();
-                this.tweens.add({ targets: this.operator, scale: 1.1, duration: 100, yoyo: true });
-              },
-            });
-          };
-          const setIncident = (station: StationId, failed = false) => {
-            stageStations.forEach((candidate) => {
-              const active = candidate.id === station;
-              this.stationFrames.get(candidate.id)?.setStrokeStyle(active ? 3 : 2, candidate.color, active ? 0.95 : 0.3);
-              const stationBeacon = this.stationBeacons.get(candidate.id);
-              if (stationBeacon) {
-                this.tweens.killTweensOf(stationBeacon);
-                stationBeacon.setAlpha(active ? 1 : 0.3).setScale(1);
-                if (active) this.tweens.add({ targets: stationBeacon, scale: 2.1, alpha: 0.18, duration: 720, yoyo: true, repeat: -1 });
-              }
-            });
-            if (failed) {
-              this.cameras.main.shake(260, 0.006);
-              this.cameras.main.flash(180, 255, 72, 48, false);
-            }
-          };
-          setIncident("spacex");
-          const onIncident = (event: Event) => {
-            const detail = (event as CustomEvent<{ station: StationId; failed?: boolean }>).detail;
-            setIncident(detail.station, detail.failed);
-          };
-          window.addEventListener("agrim:move", onMove);
-          window.addEventListener("agrim:incident", onIncident);
-          cleanupMove = () => {
-            window.removeEventListener("agrim:move", onMove);
-            window.removeEventListener("agrim:incident", onIncident);
-          };
-        }
-      }
-
-      const bounds = canvasRef.current.getBoundingClientRect();
-      game = new Phaser.Game({
-        type: Phaser.AUTO,
-        parent: canvasRef.current,
-        width: Math.max(360, Math.round(bounds.width)),
-        height: Math.max(600, Math.round(bounds.height)),
-        backgroundColor: "#0d0e0e",
-        transparent: false,
-        render: { antialias: true, pixelArt: false },
-        scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
-        scene: OperationsScene,
-      });
-    }
-
-    void mountScene();
-    return () => {
-      disposed = true;
-      cleanupMove?.();
-      game?.destroy(true);
-    };
-  }, []);
-
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("agrim:incident", {
-      detail: {
-        station: scenario.station,
-        failed: phase === "resolving" && Boolean(outcome?.degraded),
-      },
-    }));
-  }, [outcome?.degraded, phase, scenario.station]);
-
-  const chooseStation = useCallback(
-    (station: StationId) => {
-      if (phase !== "playing") return;
-      setSelectedStation(station);
-      moveAgrim(station);
-    },
-    [phase],
-  );
-
-  const choose = useCallback(
-    async (choice: ScenarioChoice) => {
-      if (!scenario || phase !== "playing") return;
-      setPhase("resolving");
-
-      if (scenario.plotTwist === "elon-arrival") {
-        setOutcome({
-          eyebrow: "Gemma · probability branch active",
-          headline: "Simulating Elon's impact…",
-          narrative: "Gemma is testing whether this decision accelerates Innovation City—or transfers control of it.",
-        });
-
-        try {
-          const data = await requestGemma<GemmaElonResponse>({
-            mode: "elon_twist",
-            decision: choice.decision,
-            scenario: scenario.body,
-            gameState: stats,
-          });
-          const effects = mergeEffects(choice.effects, data.result?.statChanges ?? {});
-          const nextStats = applyEffects(stats, effects);
-          setStats(nextStats);
-          setOutcome({
-            eyebrow: data.result?.direction === "disruptor"
-              ? "Plot twist · Elon destabilizes the city"
-              : "Plot twist · Elon accelerates the city",
-            headline: data.result?.headline ?? "The city enters a new trajectory.",
-            narrative: data.result?.narrative ?? "Elon's arrival changes the balance of power inside SpaceXAI.",
-            hook: data.result?.nextHook,
-            effects,
-            degraded: data.degraded,
-          });
-          scheduleAdvance(nextStats);
-          return;
-        } catch {
-          const effects = mergeEffects(choice.effects, { elon: 5, control: -7, energy: -2 });
-          const nextStats = applyEffects(stats, effects);
-          setStats(nextStats);
-          setOutcome({
-            eyebrow: "Offline plot twist",
-            headline: "Elon moves faster than the safeguards.",
-            narrative: "The local model goes quiet as SpaceXAI accelerates. Mission confidence rises, but Agrim loses part of the city's human override.",
-            hook: "Restore civic control before the machines approve their own upgrades.",
-            effects,
-            degraded: true,
-          });
-          scheduleAdvance(nextStats);
-          return;
-        }
-      }
-
-      const nextStats = applyEffects(stats, choice.effects);
-      setStats(nextStats);
-      setOutcome({
-        eyebrow: choice.delegate ? "Gemma · local chief of staff" : "Decision executed",
-        headline: choice.label,
-        narrative: choice.delegate
-          ? "The local model is reading the request without sending sensitive operations data elsewhere."
-          : "The call is made. The dashboards move. Somewhere, the next notification is already blinking.",
-        effects: choice.effects,
-      });
-
-      try {
-        if (choice.delegate) {
-          const data = await requestGemma<GemmaTriageResponse>({
-            role: stationRole(scenario.station),
-            message: scenario.body,
-            context: { title: scenario.title, decision: choice.decision, stats: nextStats },
-          });
-          const recommendation = data.result?.recommendedAction?.replaceAll("_", " ") ?? "review manually";
-          const confidence = Math.round((data.result?.confidence ?? 0.5) * 100);
-          setOutcome({
-            eyebrow: data.degraded ? "Fallback protocol" : "Gemma · local analysis complete",
-            headline: `${recommendation} · ${confidence}%`,
-            narrative: data.result?.reason ?? "Gemma returned a cautious recommendation.",
-            effects: choice.effects,
-            degraded: data.degraded,
-          });
-        } else {
-          const data = await requestWorldConsequence({
-            mode: "consequence",
-            decision: choice.decision,
-            scenario: scenario.body,
-            gameState: nextStats,
-          });
-          setOutcome({
-            eyebrow: data.degraded ? "Simulated consequence" : "City consequence",
-            headline: data.result?.headline ?? choice.label,
-            narrative: data.result?.narrative ?? "The world reacts to Agrim's call.",
-            effects: choice.effects,
-            degraded: data.degraded,
-          });
-        }
-      } catch {
-        setOutcome({
-          eyebrow: "Offline consequence",
-          headline: choice.label,
-          narrative: "The AI line went quiet, but the week did not. The deterministic playbook took over.",
-          effects: choice.effects,
-          degraded: true,
-        });
-      } finally {
-        scheduleAdvance(nextStats);
-      }
-    },
-    [phase, scenario, scheduleAdvance, stats],
-  );
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (phase !== "playing") return;
-      const stationIndex = Number(event.key) - 1;
-      if (stationIndex >= 0 && stationIndex < stations.length) {
-        chooseStation(stations[stationIndex]);
-        return;
-      }
-      if (selectedStation !== scenario.station) return;
-      const choiceIndex = ["a", "b", "c"].indexOf(event.key.toLowerCase());
-      if (choiceIndex >= 0) void choose(scenario.choices[choiceIndex]);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [choose, chooseStation, phase, scenario, selectedStation]);
-
-  const endings = useMemo(() => endingFor(stats), [stats]);
-  const exitGame = () => {
-    if (onExit) onExit();
-    else window.location.reload();
+  const pushLog = (text: string, onDay = day) => {
+    setLog((current) => [{ id: logId.current++, day: onDay, text }, ...current].slice(0, 4));
   };
-  const elapsed = scenario ? scenario.timeout - secondsLeft : 0;
-  const timerScale = scenario ? Math.max(0, 1 - elapsed / scenario.timeout) : 0;
-  const urgency = secondsLeft <= 5 ? "critical" : secondsLeft <= 10 ? "warning" : "stable";
 
-  if (phase === "briefing") {
-    return (
-      <main className={styles.briefingScreen}>
-        <div className={styles.endGrain} aria-hidden="true" />
-        <div className={styles.briefingTopline}>
-          <span>Agrim Tycoon</span>
-          <span>Campaign file · 01</span>
+  const commit = (effects: Partial<CityState>) => {
+    setCity((current) => applyState(current, effects));
+    setPulses(effects);
+    window.clearTimeout(pulseTimer.current);
+    pulseTimer.current = window.setTimeout(() => setPulses({}), 2400);
+  };
+
+  const operate = () => {
+    if (completed.includes(active.id)) {
+      pushLog(`${active.title} has already acted this cycle. Close the day to refresh its team.`);
+      return;
+    }
+    commit(active.effects);
+    setCompleted((current) => [...current, active.id]);
+    pushLog(`${active.action} complete — ${effectLabel(active.effects)}.`);
+  };
+
+  const buildProject = (project: Project) => {
+    if (built.includes(project.id)) {
+      pushLog(`${project.name} is already part of the city.`);
+      return;
+    }
+    if (city.funds < project.cost || city.materials < project.materialCost) {
+      pushLog("The city needs more funds or materials. Send the Machine City crews out first.");
+      return;
+    }
+    commit({ funds: -project.cost, materials: -project.materialCost, ...project.effects });
+    setBuilt((current) => [...current, project.id]);
+    pushLog(`${project.name} commissioned — ${effectLabel(project.effects)}.`);
+  };
+
+  const endDay = () => {
+    if (incident || cycleFlash) return;
+    const upkeep = 5 + built.length * 2;
+    const foodUse = Math.max(3, Math.ceil(city.residents / 190));
+    commit({ funds: 8 - upkeep, food: -foodUse, wellbeing: city.food > foodUse ? 1 : -7 });
+    setCompleted([]);
+    const nextDay = day + 1;
+    setDay(nextDay);
+    pushLog(`City cycle ${day} closed. Services were funded and ${foodUse} food was consumed.`, nextDay);
+
+    setCycleFlash(`Day ${String(nextDay).padStart(2, "0")}`);
+    flashTimer.current = window.setTimeout(() => setCycleFlash(null), 1700);
+    incidentTimer.current = window.setTimeout(() => setIncident(incidents[(day - 1) % incidents.length]), 1250);
+  };
+
+  const resolveIncident = (choice: Incident["choices"][number]) => {
+    commit(choice.effects);
+    pushLog(`${choice.label} — ${effectLabel(choice.effects)}.`);
+    setIncident(null);
+  };
+
+  const askGemma = async () => {
+    setAdvising(true);
+    try {
+      const data = await requestGemma<GemmaTriageResponse>({
+        role: "community",
+        message: `Innovation City status: ${JSON.stringify(city)}. ${active.title} is active. Identify the most important trade-off the mayor should review next.`,
+        context: { day, builtProjects: built, completedOperations: completed },
+      });
+      setAdvisor({
+        title: data.result?.recommendedAction?.replaceAll("_", " ") ?? "Review city services",
+        detail: data.result?.reason ?? "Review the active district before committing city resources.",
+        degraded: data.degraded,
+      });
+    } catch {
+      setAdvisor({ title: "Local advisor unavailable", detail: "Gemma could not be reached. You still retain full control of every city decision.", degraded: true });
+    } finally {
+      setAdvising(false);
+    }
+  };
+
+  const metricCells: Array<{ key: keyof CityState; label: string; value: string }> = [
+    { key: "funds", label: "Funds", value: `$${city.funds}m` },
+    { key: "residents", label: "Residents", value: city.residents.toLocaleString() },
+    { key: "food", label: "Food", value: String(city.food) },
+    { key: "materials", label: "Materials", value: String(city.materials) },
+    { key: "power", label: "Power", value: `${city.power}%` },
+    { key: "trust", label: "Trust", value: `${city.trust}%` },
+  ];
+
+  return <main className={styles.game}>
+    <div className={styles.worldArt} aria-hidden="true" />
+    <div className={styles.skyGlow} aria-hidden="true" />
+    <div className={styles.atmosphere} aria-hidden="true" />
+    <div className={styles.vignette} aria-hidden="true" />
+
+    <header className={styles.hud}>
+      <div className={styles.brand}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/agrim-tech-overlord-logo.png" alt="" />
+        <div><span>Agrim Tycoon</span><strong>Innovation City</strong></div>
+      </div>
+      <div className={styles.cycle}><span>City cycle</span><strong>Day {String(day).padStart(2, "0")}</strong></div>
+      <div className={styles.metrics}>
+        {metricCells.map((cell) => {
+          const delta = pulses[cell.key] ?? 0;
+          return <div key={cell.key}>
+            <span>{cell.label}</span>
+            <strong>{cell.value}</strong>
+            {delta ? <em key={`${cell.key}-${day}-${delta}`} className={`${styles.delta} ${delta > 0 ? styles.deltaUp : styles.deltaDown}`}>{delta > 0 ? "+" : ""}{delta}</em> : null}
+          </div>;
+        })}
+      </div>
+      <button className={styles.exit} type="button" onClick={() => onExit ? onExit() : window.location.reload()}>Exit</button>
+    </header>
+
+    <section className={styles.worldCopy} aria-label="City overview">
+      <span className={styles.liveTag}><i />Live city · Autonomous frontier</span>
+      <h1>Run the city.<br />Keep it human.</h1>
+      <p>Robot crews bring in the essentials. Your three businesses decide what the city becomes.</p>
+
+      <div className={styles.healthDock}>
+        <div className={styles.gauge} role="img" aria-label={`City health ${cityHealth} percent`}>
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <circle className={styles.gaugeTrack} cx="32" cy="32" r="26" />
+            <circle
+              className={styles.gaugeFill}
+              cx="32" cy="32" r="26"
+              strokeDasharray={GAUGE_CIRCUMFERENCE}
+              strokeDashoffset={GAUGE_CIRCUMFERENCE * (1 - cityHealth / 100)}
+            />
+          </svg>
+          <strong>{cityHealth}<small>%</small></strong>
         </div>
-        <section className={styles.briefingBody}>
-          <p className={styles.endKicker}>Innovation City · Mayoral briefing</p>
-          <h1>Build the city.<br />Keep it human.</h1>
-          <p>
-            You have seven days to make Innovation City work. Build the machines,
-            protect the people, and grow builders who can steer what they create.
-          </p>
-          <div className={styles.briefingSystems}>
-            <article><span>01</span><strong>Machine City</strong><small>Move fast without surrendering control.</small></article>
-            <article><span>02</span><strong>Talent Network</strong><small>Earn the trust that innovation needs.</small></article>
-            <article><span>03</span><strong>Builder Academy</strong><small>Grow people who can challenge the system.</small></article>
+        <div className={styles.healthMeta}>
+          <span>City health</span>
+          <div className={styles.microStats}>
+            <em>Innovation {city.innovation}%</em>
+            <em>Wellbeing {city.wellbeing}%</em>
           </div>
-          <div className={styles.briefingActions}>
-            <button type="button" onClick={() => setPhase("playing")}>Begin day one <span aria-hidden="true">→</span></button>
-            <button type="button" onClick={exitGame}>Return to title</button>
-          </div>
-          <small>10 incidents · 5 city systems · Gemma runs locally on your Mac</small>
-        </section>
-      </main>
-    );
-  }
+        </div>
+      </div>
+    </section>
 
-  if (phase === "finished") {
-    return (
-      <main className={styles.endScreen}>
-        <div className={styles.endGrain} aria-hidden="true" />
-        <p className={styles.endKicker}>Week complete · Innovation City charter review</p>
-        <h1>{endings.overall}</h1>
-        <p className={styles.endSummary}>You did not just keep the city running. You decided who it answers to when the machines begin moving faster than its people.</p>
-        <div className={styles.endingGrid}>
-          <article><span>People</span><strong>{endings.community}</strong><small>Community {stats.community}/100</small></article>
-          <article><span>Capability</span><strong>{endings.teaching}</strong><small>Builders {stats.students}/100</small></article>
-          <article><span>Power</span><strong>{endings.spacex}</strong><small>Acceleration {stats.elon}/100 · Control {stats.control}/100</small></article>
-        </div>
-        <p className={styles.verdict}>“The city did not need a faster machine. It needed a mayor who could decide what progress was for.”</p>
-        <div className={styles.endActions}>
-          <button type="button" onClick={exitGame}>Return to title</button>
-          <button
-            type="button"
-            onClick={() => {
-              setTaskIndex(0);
-              setStats(initialStats);
-              setSecondsLeft(scenarios[0].timeout);
-              setOutcome(null);
-              setSelectedStation(null);
-              setPhase("playing");
-              moveAgrim("center");
-            }}
-          >Play again</button>
-        </div>
-      </main>
-    );
-  }
+    <div className={styles.hotspots} aria-label="City districts">
+      {businesses.map((business) => {
+        const done = completed.includes(business.id);
+        return <button
+          key={business.id}
+          type="button"
+          className={`${styles.hotspot} ${styles[`hotspot${business.id[0].toUpperCase()}${business.id.slice(1)}`]} ${activeId === business.id ? styles.hotspotActive : ""} ${done ? styles.hotspotDone : ""}`}
+          onClick={() => setActiveId(business.id)}
+        >
+          <i className={styles.beacon} aria-hidden="true" />
+          <span>{business.index}</span>
+          <strong>{business.title}</strong>
+          <small>{done ? "Operation complete" : business.location}</small>
+        </button>;
+      })}
+    </div>
 
-  return (
-    <main className={`${styles.gameShell} ${styles[urgency]}`}>
-      <div className={styles.canvas} ref={canvasRef} aria-hidden="true" />
-      <div className={styles.scanlines} aria-hidden="true" />
-
-      <header className={styles.hud}>
-        <div className={styles.brandBlock}>
-          {/* This local HUD asset intentionally bypasses the runtime image optimizer. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/agrim-tech-overlord-logo.png" alt="" />
-          <div><span>Agrim Tycoon</span><strong>INNOVATION CITY</strong></div>
-        </div>
-        <div className={styles.shiftBlock}>
-          <span>{weekdays[Math.min(6, scenario.day - 1)]} · DAY {scenario.day}/07</span>
-          <strong>SHIFT {String(taskIndex + 1).padStart(2, "0")}</strong>
-        </div>
-        <div className={styles.stats}>
-          {statLabels.map(({ key, label, code }) => (
-            <div className={`${styles.stat} ${stats[key] < 35 ? styles.statDanger : ""}`} key={key}>
-              <span>{label}</span>
-              <i>{code}</i>
-              <strong>{stats[key]}</strong>
-              <div><b style={{ width: `${stats[key]}%` }} /></div>
-            </div>
-          ))}
-        </div>
-        <button className={styles.exitButton} type="button" onClick={exitGame}>ESC<br /><span>Exit</span></button>
-      </header>
-
-      <div className={styles.missionStrip}>
-        <span>LIVE OPERATIONS</span>
-        <p>One mayor. Three systems. Every decision writes the charter.</p>
-        <b>{taskIndex + 1} / {scenarios.length} INCIDENTS</b>
+    <aside className={styles.commandPanel} aria-live="polite">
+      <div className={styles.panelArt} key={active.id}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={active.artwork} alt="" />
+        <span className={styles.panelArtIndex}>{active.index}</span>
+        <em className={completed.includes(active.id) ? styles.panelArtDone : ""}>{completed.includes(active.id) ? "Complete" : "Ready"}</em>
       </div>
 
-      <section className={styles.stationControls} aria-label="Innovation City systems">
-        {stations.map((station, index) => {
-          const meta = stationMeta[station];
-          const visual = stationVisuals[station];
-          const hasTask = scenario.station === station;
-          return (
-            <button
-              key={station}
-              type="button"
-              className={`${styles.stationButton} ${selectedStation === station ? styles.selected : ""} ${hasTask ? styles.hasTask : ""}`}
-              style={{ "--station-accent": meta.accent } as React.CSSProperties}
-              onClick={() => chooseStation(station)}
-              disabled={phase !== "playing"}
-            >
-              <span className={styles.stationKey}>{index + 1}</span>
-              <span className={styles.stationCopy}><small>{visual.desk}</small><strong>{visual.displayName}</strong></span>
-              <span className={styles.stationState}>{hasTask ? "P0 · INCOMING" : "CLEAR"}</span>
-              {hasTask ? <i className={styles.pulse} aria-label="Urgent request" /> : null}
-            </button>
-          );
-        })}
+      <div className={styles.panelBody}>
+        <span className={styles.panelSector}>{active.sector} · {active.location}</span>
+        <h2>{active.title}</h2>
+        <p>{active.summary}</p>
+
+        <div className={styles.effectChips}>
+          {effectChips(active.effects).map(([key, value]) => <span key={key} className={value > 0 ? styles.chipUp : styles.chipDown}>
+            {key} {value > 0 ? "+" : ""}{value}
+          </span>)}
+        </div>
+
+        <div className={styles.statusRow}><i /><span>{active.status}</span></div>
+
+        <button className={styles.primaryAction} type="button" onClick={operate} disabled={completed.includes(active.id)}>
+          <span>{completed.includes(active.id) ? "Operation complete" : active.action}</span>
+          <span aria-hidden="true">→</span>
+        </button>
+
+        <span className={styles.projectLabel}>City projects · {built.length}/3 built</span>
+        <div className={styles.projects}>
+          {projects.map((project) => {
+            const done = built.includes(project.id);
+            return <button key={project.id} type="button" className={done ? styles.projectComplete : ""} onClick={() => buildProject(project)}>
+              <span className={styles.projectMark}>{done ? "✓" : "+"}</span>
+              <div><strong>{project.name}</strong><small>{project.detail}</small></div>
+              <em>{done ? "Built" : `$${project.cost}m`}</em>
+            </button>;
+          })}
+        </div>
+
+        <button className={styles.endDay} type="button" onClick={endDay} disabled={Boolean(incident) || Boolean(cycleFlash)}>
+          <span>End city cycle</span>
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </aside>
+
+    <section className={styles.mayorLog} aria-live="polite">
+      <div className={styles.logHead}>
+        <span>Mayor’s log</span>
+        <button type="button" onClick={() => void askGemma()} disabled={advising}>
+          <i className={advising ? styles.thinking : ""} aria-hidden="true" />
+          {advising ? "Gemma is reviewing…" : "Ask Gemma"}
+        </button>
+      </div>
+      <div className={styles.logFeed}>
+        {log.map((entry, position) => <p key={entry.id} className={position === 0 ? styles.logLatest : ""}>
+          <em>D{String(entry.day).padStart(2, "0")}</em>{entry.text}
+        </p>)}
+      </div>
+      {advisor ? <article className={styles.advisor}>
+        <span className={advisor.degraded ? styles.advisorDegraded : ""}>{advisor.degraded ? "Advisor fallback · no local model" : "Gemma · local chief of staff"}</span>
+        <strong>{advisor.title}</strong>
+        <p>{advisor.detail}</p>
+      </article> : null}
+    </section>
+
+    <div className={styles.resourceTicker} aria-hidden="true">
+      <span>◉ harvesters {completed.includes("machine") ? "returning" : "active"}</span>
+      <span>◆ haulers online</span>
+      <span>✦ city projects {built.length}/3</span>
+      <span>▲ cycle {String(day).padStart(2, "0")}</span>
+    </div>
+
+    {cycleFlash ? <div className={styles.cycleFlash} aria-hidden="true">
+      <div className={styles.cycleFlashInner}>
+        <span>Innovation City</span>
+        <strong>{cycleFlash}</strong>
+        <em>New signals incoming</em>
+      </div>
+    </div> : null}
+
+    {incident ? <div className={styles.incidentOverlay}>
+      <i className={styles.barTop} aria-hidden="true" />
+      <i className={styles.barBottom} aria-hidden="true" />
+      <section className={styles.incident} role="dialog" aria-modal="true" aria-labelledby="incident-title">
+        <span className={styles.incidentEyebrow}><i />{incident.eyebrow}</span>
+        <h2 id="incident-title">{incident.title}</h2>
+        <p>{incident.detail}</p>
+        <div className={styles.incidentChoices}>
+          {incident.choices.map((choice, index) => <button key={choice.label} type="button" onClick={() => resolveIncident(choice)}>
+            <span className={styles.choiceKey}>{index === 0 ? "A" : "B"}</span>
+            <strong>{choice.label}</strong>
+            <span className={styles.choiceDetail}>{choice.detail}</span>
+            <em>{effectLabel(choice.effects)}</em>
+          </button>)}
+        </div>
+        <p className={styles.incidentHint}>Every signal shifts the city. Choose as the mayor.</p>
       </section>
-
-      <aside className={styles.inbox} aria-live="polite" style={{ "--incident-accent": stationMeta[scenario.station].accent } as React.CSSProperties}>
-        <div className={styles.inboxRail}>
-          <span>INCIDENT {String(taskIndex + 1).padStart(2, "0")}</span>
-          <b className={styles.timerNumber}>{String(secondsLeft).padStart(2, "0")}</b>
-          <small>SEC</small>
-        </div>
-        <div className={styles.inboxBody}>
-          <div className={styles.inboxTopline}>
-            <span>{stationMeta[scenario.station].code} / PRIORITY ZERO</span>
-            <strong>{phase === "resolving" ? "RESOLVING" : urgency.toUpperCase()}</strong>
-          </div>
-          <div className={styles.timer}><i style={{ transform: `scaleX(${timerScale})` }} /></div>
-
-          {phase === "resolving" && outcome ? (
-            <div className={styles.outcome}>
-              <p>{outcome.eyebrow}</p>
-              <h2>{outcome.headline}</h2>
-              <span>{outcome.narrative}</span>
-              {outcome.hook ? <p className={styles.outcomeHook}>Next: {outcome.hook}</p> : null}
-              {outcome.effects ? (
-                <div className={styles.impactRow}>
-                  {impactEntries(outcome.effects).map(([key, value]) => (
-                    <b className={value > 0 ? styles.positive : styles.negative} key={key}>
-                      {impactLabel(key)} {value > 0 ? "+" : ""}{value}
-                    </b>
-                  ))}
-                </div>
-              ) : null}
-              <small>{outcome.degraded ? "Fallback active" : "Live intelligence"} · Next incident incoming</small>
-            </div>
-          ) : selectedStation === scenario.station ? (
-            <div className={styles.task}>
-              {scenario.portrait ? (
-                <div className={styles.twistPortrait}>
-                  {/* The source image is displayed directly so the incident card can preserve its crop. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={scenario.portrait} alt="Elon Musk arrives at SpaceXAI" />
-                  <span><b>Plot twist</b>Gemma narrative branch active</span>
-                </div>
-              ) : null}
-              <p>{scenario.plotTwist ? "Unscheduled event · " : ""}{scenario.sender}</p>
-              <h2>{scenario.title}</h2>
-              <span>{scenario.body}</span>
-              <div className={styles.choices}>
-                {scenario.choices.map((choice, index) => (
-                  <button key={choice.label} type="button" onClick={() => void choose(choice)}>
-                    <i>{String.fromCharCode(65 + index)}</i>
-                    <span><strong>{choice.label}</strong><small>{choice.detail}</small></span>
-                    <span className={styles.choiceImpact}>
-                      {choice.uncertain ? <em className={styles.uncertain}>Outcome unknown</em> : (
-                        impactEntries(choice.effects).map(([key, value]) => (
-                          <em className={value > 0 ? styles.positive : styles.negative} key={key}>
-                            {impactLabel(key)} {value > 0 ? "+" : ""}{value}
-                          </em>
-                        ))
-                      )}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className={styles.dispatch}>
-              <p>Incoming · {scenario.sender}</p>
-              <h2>{scenario.title}</h2>
-              <span>Move Agrim to <strong>{stationVisuals[scenario.station].displayName}</strong>. The other two worlds will keep moving.</span>
-              <button type="button" onClick={() => chooseStation(scenario.station)}>
-                Deploy to station <b aria-hidden="true">→</b>
-              </button>
-              <small>PRESS {stations.indexOf(scenario.station) + 1} TO DEPLOY</small>
-            </div>
-          )}
-        </div>
-      </aside>
-
-      <footer className={styles.gameFooter}>
-        <span><i /> GEMMA / LOCAL CHIEF OF STAFF</span>
-        <p>1—3 SELECT STATION · A—C MAKE DECISION</p>
-        <span>HUMAN / FINAL AUTHORITY <i /></span>
-      </footer>
-    </main>
-  );
+    </div> : null}
+  </main>;
 }

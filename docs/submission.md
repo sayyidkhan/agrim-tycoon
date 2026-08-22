@@ -10,7 +10,7 @@
 | **Team captain** | Sayyid Khan |
 | **Contact email** | sayyidkhan92@hotmail.com |
 | **Project link** | https://agrim-tycoon.vercel.app/ |
-| **Demo video link** | `TBD — add the public or unlisted video URL before submitting (maximum 3 minutes).` |
+| **Demo video link** | https://youtu.be/x25d2_Ezd30 |
 | **Team members** | Sayyid Khan |
 | **Sponsor prize eligibility** | **Google DeepMind — Best Use of Gemma** |
 
@@ -29,7 +29,7 @@ Judges should play the Machine City charter scenario and ask Gemma for guardrail
 - **Repository:** [github.com/sayyidkhan/agrim-tycoon](https://github.com/sayyidkhan/agrim-tycoon)
 - **Track:** Best Use of Gemma
 - **Gemma proof:** a bundled local GGUF model, served by `llama.cpp`, returns structured incident triage and the Machine City guardrail branch.
-- **Demo video:** `TBD`
+- **Demo video:** [YouTube demo](https://youtu.be/x25d2_Ezd30)
 
 ## Three-minute demo outline
 
@@ -44,7 +44,7 @@ Judges should play the Machine City charter scenario and ask Gemma for guardrail
 
 ## Before clicking Submit
 
-- [ ] Replace the demo-video placeholder with a public or unlisted URL that plays without login.
+- [x] Add the public or unlisted demo-video URL; confirm it plays without login and is at most three minutes.
 - [ ] Confirm `Agrim Tycoon` is the actual registered team name; change it here if your Gavel team has a different name.
 - [ ] Confirm the repository is public.
 - [ ] Demonstrate Gemma changing a real game decision.

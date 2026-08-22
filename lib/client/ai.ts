@@ -1,5 +1,3 @@
-import type { GameStats } from "@/lib/game/scenarios";
-
 type JsonRecord = Record<string, unknown>;
 
 interface TauriWindow extends Window {
@@ -35,7 +33,7 @@ export interface GemmaElonResponse {
     direction?: "accelerator" | "disruptor";
     headline?: string;
     narrative?: string;
-    statChanges?: Partial<GameStats>;
+    statChanges?: Record<string, number>;
     nextHook?: string;
   };
   degraded?: boolean;
@@ -45,7 +43,7 @@ export interface WorldConsequenceRequest {
   mode: "consequence";
   decision: string;
   scenario: string;
-  gameState: GameStats;
+  gameState: unknown;
 }
 
 export interface WorldConsequenceResponse {

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+  <rect width="1920" height="1080" fill="#12241c" fill-opacity="0.78"/>
+  <rect x="90" y="90" width="1100" height="900" fill="#12241c" fill-opacity="0.88" stroke="#e4b747" stroke-width="4"/>
+  <text x="145" y="175" fill="#e4b747" font-family="Arial" font-size="26" letter-spacing="8">05 / READY, MAYOR?</text>
+  <text x="145" y="420" fill="#f2efe8" font-family="Arial" font-size="124" font-weight="bold">YOUR CITY.</text>
+  <text x="145" y="565" fill="#f2efe8" font-family="Arial" font-size="124" font-weight="bold">YOUR CALL.</text>
+  <rect x="145" y="700" width="660" height="126" fill="#e4b747"/>
+  <text x="202" y="783" fill="#11110f" font-family="Arial" font-size="52" font-weight="bold">PLAY THE GAME →</text>
+  <text x="145" y="920" fill="#f2efe8" font-family="Arial" font-size="32" letter-spacing="8">AGRIM TYCOON</text>
+</svg>

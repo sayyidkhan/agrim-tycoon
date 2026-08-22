@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+  <rect width="1920" height="1080" fill="#11110f" fill-opacity="0.74"/>
+  <rect x="80" y="80" width="1760" height="920" fill="#11110f" fill-opacity="0.78" stroke="#e4b747" stroke-width="4"/>
+  <text x="140" y="160" fill="#e4b747" font-family="Arial" font-size="26" letter-spacing="8">02 / AGRIM'S ULTIMATE VISION</text>
+  <text x="140" y="390" fill="#f2efe8" font-family="Arial" font-size="108" font-weight="bold">AUTONOMOUS CITY.</text>
+  <text x="140" y="535" fill="#e4b747" font-family="Arial" font-size="108" font-weight="bold">HUMAN FUTURE.</text>
+  <line x1="140" y1="630" x2="1040" y2="630" stroke="#e4b747" stroke-width="6"/>
+  <text x="140" y="735" fill="#f2efe8" font-family="Arial" font-size="48">HARVEST. BUILD. DELIVER.</text>
+  <text x="140" y="820" fill="#f2efe8" font-family="Arial" font-size="38">Progress moves fast. People stay in charge.</text>
+</svg>

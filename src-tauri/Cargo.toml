@@ -7,7 +7,8 @@ edition = "2021"
 
 [lib]
 name = "agrim_tycoon_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# The distributable target is macOS desktop; mobile crate formats are not needed here.
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

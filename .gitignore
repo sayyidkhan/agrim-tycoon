@@ -55,3 +55,8 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# HyperFrames video render outputs and local preview caches.
+/videos/*/.media/
+/videos/*/.thumbnails/
+/videos/*/renders/
