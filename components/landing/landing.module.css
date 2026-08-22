@@ -168,7 +168,7 @@
   margin-top: 7px;
   color: var(--signal);
   font-family: var(--font-geist-mono), monospace;
-  font-size: clamp(8px, 0.62vw, 10px);
+  font-size: clamp(9px, 0.72vw, 12px);
   font-weight: 680;
   letter-spacing: 0.1em;
   line-height: 1.4;
