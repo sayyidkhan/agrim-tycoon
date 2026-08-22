@@ -1,78 +1,40 @@
-# Build with Gemini Hackathon 2026 — Reference Brief
+# Build with Gemini Hackathon 2026 — Gemma Track Brief
 
-Source: [participant guide](https://65labs-gemini-hack.notion.site/). Reviewed 22 August 2026.
+Source: [participant guide](https://65labs-gemini-hack.notion.site/). Reviewed 22 August 2026. This is the team's execution interpretation for its selected track, not a replacement for the official rules.
+
+## Chosen track
+
+**Google DeepMind — Best Use of Gemma**
+
+Agrim Tycoon is deliberately not entering the Gemini or elderly-hack tracks. A focused, provable local-Gemma story is stronger than broad but weakly demonstrated multi-track claims.
 
 ## Non-negotiables
 
-- Build new work during the hackathon; teams may have up to four members.
-- Gemini or Gemma must be essential to the product—not decorative.
-- Enter a maximum of two prize tracks.
-- Submit by **3:30 pm sharp**: public GitHub repository, demo video of at most three minutes, project name, one-line description, and selected track(s).
-- Use only code, data, and assets the team has the right to use. Legal, ethical, or platform-policy violations can disqualify a project.
+- Gemma must be essential to the product, not a decorative chat panel.
+- Submit a public GitHub repository, a public or unlisted demo video of at most three minutes, project details, and the selected track by the event deadline.
+- Use only code, data, model weights, and assets the team has the right to use.
+- Be accurate about what is live, local, simulated, and deterministic fallback behaviour.
 
-## Prize tracks
+## What must be proven in the demo
 
-Each track awards one US$1,000 prize.
+1. **Local deployment:** show Gemma running inside the macOS app through the bundled `llama.cpp` / `llama-server` runtime.
+2. **Essential game loop:** delegate a meaningful city decision to Gemma; it returns structured triage or a scenario branch that changes visible city stats.
+3. **Human accountability:** the player reviews or challenges Gemma rather than blindly accepting an opaque result.
+4. **Privacy and resilience:** explain that the scenario, decision, and inference stay local; show the deterministic fallback only as an honest reliability boundary.
+5. **Technical specificity:** name the model, GGUF quantization, Apple Silicon target, localhost endpoint, and why that deployment choice is useful.
 
-### Best Use of Gemma
+## Winning narrative
 
-Show an open model used in a way that makes its openness, privacy, efficiency, deployability, or adaptability indispensable. Strong proof includes a local/offline flow, what data stays private, a target-device deployment, a model or quantization comparison, or a demonstrated domain/community adaptation.
+> Innovation City cannot afford to upload every sensitive operational decision. Agrim Tycoon puts a local Gemma chief of staff beside the mayor: it triages urgent incidents, proposes guardrails, and simulates risky choices while the human remains accountable.
 
-### Best Elderly Hack
+The memorable moment is not “ask a chatbot.” It is the player asking local Gemma to stress-test a decision, seeing a structured recommendation and the projected cost to civic control, then making the final call.
 
-Make technology meaningfully easier, safer, and lower-friction for seniors, caregivers, or eldercare workers. Judging weights:
+## Judge-facing checklist
 
-| Criterion | Weight |
-| --- | ---: |
-| Empathy and usability | 40% |
-| Contextual safety and reliability | 30% |
-| Real-world impact and feasibility | 30% |
-
-Health-related prototypes must avoid diagnosis, medication changes, emergency claims, and unsupervised consequential actions. Make uncertainty, confirmation, human escalation, consent, and accessibility explicit.
-
-### Most Creative Gemini Hack
-
-Use Gemini Flash's speed and multimodal capabilities to create a memorable live interaction. The audience should see/hear a live input, observe non-scripted model behaviour, get a fast response, and see that output materially change the experience. Be transparent about which parts are live, cached, mocked, or precomputed.
-
-## What judges look for
-
-- Clear problem: audience, need, and payoff are easy to understand.
-- A working core loop shown early.
-- Meaningful AI use: Gemini or Gemma is essential.
-- One memorable demonstration moment.
-
-General judging lenses: technical merit, polish, execution, and wow factor.
-
-## Avoid as the core idea
-
-The event brief flags these as overdone or problematic: generic chatbots (including AI-for-education), basic RAG apps, dashboards, Streamlit apps, image analysers, mental-health advisors, job-screening tools, nutrition coaches, and personality analysers.
-
-## Recommended position for Agrim Tycoon
-
-**Enter: Best Use of Gemma + Most Creative Gemini Hack.** Do not target the elderly track without a fundamental product shift.
-
-### Gemma proof: local chief of staff
-
-Gemma powers task delegation and moderation in a locally hosted, privacy-conscious workflow. Make this visible in the demo:
-
-- Run a core delegation decision locally or with the network disconnected.
-- Explain what inputs stay local and why that matters.
-- State the deployment/model choice and its latency or resource trade-off.
-- Let the player review and correct Gemma, so its strengths and limitations are visible.
-
-### Gemini proof: live game director
-
-Gemini should turn player decisions into rapid, cross-role, non-scripted consequences that visibly reshape the game world. The central live moment is: a player makes a difficult decision; Gemini reacts to the current state; a surprising consequence changes a later incident, character response, or ending trajectory.
-
-### Demo narrative
-
-> A time-poor operator is balancing a community, students, and a high-pressure AI role. A private local chief of staff handles delegated work, while a live AI director turns every trade-off into an escalating, visible consequence.
-
-## Final submission checklist
-
-- [ ] Public repository opens without requesting access.
-- [ ] README explains exactly how Gemini and Gemma power the product.
-- [ ] Video shows the core loop early and stays within three minutes.
-- [ ] The local Gemma choice and live Gemini consequence are demonstrated, not just described.
-- [ ] Licensing, privacy, consent, and safety boundaries are explained where relevant.
-- [ ] The two chosen tracks match the strongest proof in the demo.
+- [ ] Begin with the playable core loop within 20 seconds.
+- [ ] Show the macOS app, not only a slide or browser mock-up.
+- [ ] Show a Gemma request and a visible game-state consequence.
+- [ ] State the exact local model/runtime and that it runs on-device.
+- [ ] Show one limitation or fallback honestly; never imply an unavailable model response is live.
+- [ ] End on the user value: private, resilient decision support with human control.
+- [ ] Select only **Best Use of Gemma** in Gavel.

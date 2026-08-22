@@ -19,7 +19,7 @@ import {
 } from "@/lib/client/ai";
 import styles from "./game.module.css";
 
-type Phase = "playing" | "resolving" | "finished";
+type Phase = "briefing" | "playing" | "resolving" | "finished";
 
 interface GameExperienceProps {
   onExit?: () => void;
@@ -91,7 +91,7 @@ export function GameExperience({ onExit }: GameExperienceProps) {
   const [taskIndex, setTaskIndex] = useState(0);
   const [stats, setStats] = useState<GameStats>(initialStats);
   const [selectedStation, setSelectedStation] = useState<StationId | null>(null);
-  const [phase, setPhase] = useState<Phase>("playing");
+  const [phase, setPhase] = useState<Phase>("briefing");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const scenario = scenarios[taskIndex];
   const [secondsLeft, setSecondsLeft] = useState(scenario?.timeout ?? 0);
@@ -552,7 +552,7 @@ export function GameExperience({ onExit }: GameExperienceProps) {
             gameState: nextStats,
           });
           setOutcome({
-            eyebrow: data.degraded ? "Simulated consequence" : "Gemini · world reaction",
+            eyebrow: data.degraded ? "Simulated consequence" : "City consequence",
             headline: data.result?.headline ?? choice.label,
             narrative: data.result?.narrative ?? "The world reacts to Agrim's call.",
             effects: choice.effects,
@@ -598,6 +598,36 @@ export function GameExperience({ onExit }: GameExperienceProps) {
   const elapsed = scenario ? scenario.timeout - secondsLeft : 0;
   const timerScale = scenario ? Math.max(0, 1 - elapsed / scenario.timeout) : 0;
   const urgency = secondsLeft <= 5 ? "critical" : secondsLeft <= 10 ? "warning" : "stable";
+
+  if (phase === "briefing") {
+    return (
+      <main className={styles.briefingScreen}>
+        <div className={styles.endGrain} aria-hidden="true" />
+        <div className={styles.briefingTopline}>
+          <span>Agrim Tycoon</span>
+          <span>Campaign file · 01</span>
+        </div>
+        <section className={styles.briefingBody}>
+          <p className={styles.endKicker}>Innovation City · Mayoral briefing</p>
+          <h1>Build the city.<br />Keep it human.</h1>
+          <p>
+            You have seven days to make Innovation City work. Build the machines,
+            protect the people, and grow builders who can steer what they create.
+          </p>
+          <div className={styles.briefingSystems}>
+            <article><span>01</span><strong>Machine City</strong><small>Move fast without surrendering control.</small></article>
+            <article><span>02</span><strong>Talent Network</strong><small>Earn the trust that innovation needs.</small></article>
+            <article><span>03</span><strong>Builder Academy</strong><small>Grow people who can challenge the system.</small></article>
+          </div>
+          <div className={styles.briefingActions}>
+            <button type="button" onClick={() => setPhase("playing")}>Begin day one <span aria-hidden="true">→</span></button>
+            <button type="button" onClick={exitGame}>Return to title</button>
+          </div>
+          <small>10 incidents · 5 city systems · Gemma runs locally on your Mac</small>
+        </section>
+      </main>
+    );
+  }
 
   if (phase === "finished") {
     return (
@@ -767,7 +797,7 @@ export function GameExperience({ onExit }: GameExperienceProps) {
       <footer className={styles.gameFooter}>
         <span><i /> GEMMA / LOCAL CHIEF OF STAFF</span>
         <p>1—3 SELECT STATION · A—C MAKE DECISION</p>
-        <span>GEMINI / WORLD DIRECTOR <i /></span>
+        <span>HUMAN / FINAL AUTHORITY <i /></span>
       </footer>
     </main>
   );

@@ -2,17 +2,17 @@
 
 One week. Three jobs. Zero time.
 
-Agrim Tycoon is a high-fidelity browser management game about balancing the 65labs community, Code with AI students, and a demanding SpaceXAI role. Gemma acts as Agrim's locally hosted chief of staff while Gemini directs dynamic consequences.
+Agrim Tycoon is a high-fidelity management game about governing Innovation City across its community, builder academy, and machine systems. Its local Gemma chief of staff triages incidents, proposes guardrails, and simulates the consequences of high-stakes decisions.
 
 ## Stack
 
 - React, TypeScript, and Phaser 4
 - vinext and Vite
-- Local Gemma through `llama.cpp`
-- Gemini through the Google API
-- Zo Computer deployment target
+- Local Gemma through a bundled `llama.cpp` runtime
+- Tauri for the offline macOS app
+- Deterministic fallbacks for resilient gameplay
 
-The complete concept and deployment decisions live in [`docs/IDEA.md`](docs/IDEA.md) and [`docs/tech-stack.md`](docs/tech-stack.md).
+The Gemma-track strategy, technical architecture, and submission copy live in [`docs/gemma-track-playbook.md`](docs/gemma-track-playbook.md), [`docs/tech-stack.md`](docs/tech-stack.md), and [`docs/submission.md`](docs/submission.md).
 
 ## Run locally
 
@@ -30,7 +30,7 @@ The game remains playable without configured models by using deterministic fallb
 
 The desktop client uses the same game UI but calls a local Tauri command instead
 of the web API. In a release build, Tauri launches a bundled `llama-server`
-sidecar on `127.0.0.1:8080`; no Gemini key is embedded in the app.
+sidecar on `127.0.0.1:8080`; the model and all inference stay on the device.
 
 For development, start an OpenAI-compatible local server, then run:
 
@@ -60,7 +60,7 @@ weights by accident. Sign and notarize the final app before public distribution.
 The package build rejects an unpinned llama.cpp revision or a model whose
 SHA-256 differs from the declared value.
 
-## AI configuration
+## Gemma configuration
 
 Gemma is expected to run as an OpenAI-compatible `llama-server` process:
 
@@ -69,14 +69,8 @@ GEMMA_BASE_URL=http://127.0.0.1:8080/v1
 GEMMA_MODEL=gemma-local
 ```
 
-Gemini requires a server-side Google AI API key:
-
-```text
-GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-2.5-flash
-```
-
-Never expose either credential through a `NEXT_PUBLIC_*` environment variable.
+Never expose local model paths or any future service credentials through a
+`NEXT_PUBLIC_*` environment variable.
 
 ## Validation
 
@@ -93,11 +87,10 @@ native Next.js application (`next build` / `next start`). Import the repository
 as a Next.js project and leave the Output Directory unset; Vercel will detect
 the generated `.next` directory automatically.
 
-Add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in the Vercel project
-environment variables. A `GEMMA_BASE_URL` pointing at `127.0.0.1` only works
-when Gemma runs on the same host, so it is not reachable from Vercel; the app
-uses its deterministic fallback unless Gemma is exposed through a reachable,
-appropriately secured service.
+`GEMMA_BASE_URL` pointing at `127.0.0.1` only works when Gemma runs on the
+same host. The public web build uses deterministic fallbacks unless it can
+reach a deliberately deployed, appropriately secured Gemma endpoint. The
+hackathon demo should use the bundled desktop app to prove local inference.
 
 After publishing the macOS DMG as a GitHub Release asset, set
 `NEXT_PUBLIC_MAC_DOWNLOAD_URL` in Vercel Production and Preview to its

@@ -1,0 +1,25 @@
+# Agrim Tycoon
+
+Agrim Tycoon is a local-first management game built for the Google DeepMind Best Use of Gemma track. The player is mayor of Innovation City and uses a bundled Gemma chief of staff to triage incidents, draft guardrails, and stress-test high-stakes decisions. The player remains accountable for the final action.
+
+## Primary materials
+
+- [README](README.md): project overview and local setup.
+- [Gemma track playbook](docs/gemma-track-playbook.md): judge-facing pitch, demo script, and evidence checklist.
+- [Submission copy](docs/submission.md): Gavel-ready form values and reference screenshot.
+- [Technical architecture](docs/tech-stack.md): Tauri, llama.cpp, Gemma GGUF, and fallback design.
+- [Desktop release guide](docs/desktop-release.md): model provenance and DMG packaging.
+
+## AI policy
+
+- Gemma is the only submission-track model claim.
+- Local inference must be distinguished from deterministic fallback behaviour.
+- Do not claim cloud-model behaviour, multimodal features, or unsupported capabilities.
+- Do not expose model weights, private paths, secrets, or user data.
+
+## Technical facts
+
+- Desktop: Tauri 2 + React + Phaser 4.
+- Inference: bundled `llama.cpp` / `llama-server` on `127.0.0.1`.
+- Model: Gemma 3 1B IT GGUF, Q4_K_M for Apple Silicon.
+- Model responses are structured JSON that produces bounded, visible game effects.

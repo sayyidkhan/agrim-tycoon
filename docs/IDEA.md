@@ -1,163 +1,55 @@
-# Agrim Tycoon
+# Agrim Tycoon — Game Concept
 
 ## One-line pitch
 
-**Diner Dash, but instead of serving food, Agrim must serve an AI community, coding students, and Elon—at the same time.**
-
-Agrim Tycoon is a short, comedic management game about surviving seven chaotic days across three jobs with help from AI.
+**A local-first city-management game where a mayor uses Gemma to balance speed, public trust, and human control in Innovation City.**
 
 ## Player fantasy
 
-The player becomes Agrim and must balance three roles:
+The player is the mayor of Innovation City. In one intense week, they must keep three systems in balance:
 
-1. **65labs community manager** — remove scams, spam, and irrelevant posts without destroying the community.
-2. **Code with AI instructor** — help students solve problems and ship working apps.
-3. **SpaceXAI engineer** — build something impressive before Elon loses patience.
+1. **Machine City** — autonomous systems, launch decisions, and safeguards.
+2. **Talent Network** — research teams, community trust, and public legitimacy.
+3. **Builder Academy** — developing capable people who can question and steer AI.
 
-The challenge is not completing every task personally. It is deciding what deserves attention, what can wait, and what should be delegated to AI.
-
-## Game type
-
-A **real-time comedy management game** with decision and investigation mechanics:
-
-- **Diner Dash:** the main loop of juggling requests across three stations.
-- **Reigns:** quick choices with visible and hidden consequences.
-- **Papers, Please:** occasional tasks that require inspection before making a decision.
-
-## Core gameplay
-
-Agrim works from one room containing three stations:
-
-```text
-[65labs Discord]      [Code with AI]      [SpaceXAI]
-      💬💬💬                  🧑‍🎓🧑‍🎓                  🚀
-```
-
-Requests continuously appear at each station. Every request has a patience timer. The player moves Agrim between stations and decides how to handle each problem.
-
-Example simultaneous incidents:
-
-- Someone posts a suspicious token-maxxing opportunity in 65labs.
-- A student accidentally exposes an API key.
-- Elon sends one message: `Demo?`
-
-The player can only handle one request at a time. Other requests must wait or be delegated to Gemma.
+Every decision moves five visible stats: community, builders, acceleration, civic control, and energy.
 
 ## Core loop
 
-1. A request appears at one of the three stations.
-2. The player moves Agrim to the station before its timer expires.
-3. Agrim investigates the request when necessary.
-4. The player chooses an action or delegates it to Gemma.
-5. The decision changes the game stats and may create a later consequence.
-6. More requests appear while time continues moving.
-7. At the end of seven days, the player receives three role endings and one overall ending.
+1. A time-sensitive incident appears at a city system.
+2. The player chooses a direct action or delegates analysis to Gemma.
+3. Gemma returns structured, bounded guidance: a recommendation, rationale, confidence, and/or scenario branch.
+4. The player makes the final call.
+5. The game applies visible city-stat changes and presents the next consequence.
 
-## Player stats
+The player cannot solve everything personally. The challenge is knowing when local AI assistance protects time and when human judgment must override it.
 
-- **Community Trust** — health and quality of 65labs.
-- **Student Success** — how well Code with AI students are learning and shipping.
-- **Elon Approval** — confidence in Agrim's SpaceXAI work.
-- **Energy** — Agrim's ability to keep working without burning out.
-- **Time** — the limited resource shared by all three jobs.
+## Gemma's role
 
-If the player ignores a role, its problems become more serious. If energy reaches zero, Agrim burns out.
+Gemma is not a chat window. It is a local chief of staff with three specific jobs:
 
-## AI integration
+- **Triage:** sort ambiguous operational and community incidents into safe, urgent, or evidence-needed actions.
+- **Guardrails:** identify the minimum protections needed before a city system moves faster.
+- **Stress tests:** simulate the upside and control risk of a consequential decision, returning structured stat effects and a next hook.
 
-### Gemma: Agrim's assistant
+Gemma can be wrong or uncertain. That is intentional: the player sees the recommendation and remains accountable for the outcome.
 
-Gemma handles delegated tasks, especially community moderation. It classifies messages as:
+## The demonstrable scenario
 
-- scam,
-- irrelevant spam,
-- low-effort promotion,
-- legitimate opportunity,
-- genuine beginner question,
-- ambiguous.
+The strongest demo is the Machine City charter sequence. Autonomous systems are ready before their operating rules are. The player can launch immediately, establish human override rights, or ask Gemma to draft the minimum viable guardrails. Gemma's response affects civic control, acceleration, and the next incident.
 
-Gemma is intentionally imperfect. The player reviews its decisions and teaches it through feedback. Delegation saves time, but trusting it blindly can hurt the community or students.
+This makes the model's local, structured, human-in-the-loop role visible in under a minute.
 
-### Gemini: the game director
+## MVP boundaries
 
-Gemini powers the wider game world. It can:
-
-- generate incidents based on the current game state,
-- play community members, students, and Elon,
-- react to the player's decisions,
-- connect consequences across different roles,
-- evaluate a SpaceXAI diagram or prototype,
-- generate the final performance review.
-
-The AI is part of the gameplay rather than only generating decorative dialogue.
-
-## Example scenario
-
-> A member posts: "Who wants to token maxx and make $10K tonight?"
-
-Possible actions:
-
-- Ban the member immediately.
-- Warn them and request evidence.
-- Ask them to share a real project.
-- Delegate the investigation to Gemma.
-- Ignore the post and work on the SpaceXAI demo.
-
-The decision may change community trust, consume time, influence Gemma's future behaviour, or create a later crisis.
-
-## Endings
-
-The player receives a separate ending for each role.
-
-| Role | Good | Average | Bad |
-| --- | --- | --- | --- |
-| Code with AI | **Great Sage** — students become confident builders | **Helpful Tutor** — most students survive | **Vibe Coding Fraud** — everyone ships exposed API keys |
-| 65labs | **Community Legend** — the community becomes useful and welcoming | **Busy Moderator** — the chaos is barely controlled | **Discord Tyrant** — everyone gets banned |
-| SpaceXAI | **Honored by Elon** — Agrim ships something impressive | **Still Employed** — the demo works after refreshing twice | **Fired by Elon** — Agrim is replaced by an intern and a cron job |
-
-Special combined endings:
-
-- **The Ultimate Agrim** — achieve all three good endings.
-- **Burnout% Speedrun** — run out of energy while trying to do everything.
-- **Task Failed Successfully** — fail two jobs but accidentally create a successful startup.
-- **LinkedIn Thought Leader** — ship nothing but write a viral post about the journey.
-
-Example result:
-
-> **Great Sage · Community Legend · Fired by Elon**
-> You built people and protected the community—but forgot to build the product.
-
-## Hackathon MVP
-
-The first version should contain:
-
-- one room with three interactive workstations,
-- one seven-day run lasting approximately 5–10 minutes,
-- 12–15 handcrafted anchor scenarios,
-- quick choices for most requests,
-- deeper investigation for a few special requests,
-- Gemma-powered moderation and delegation,
-- Gemini-powered reactions and consequences,
-- one SpaceXAI multimodal prototype challenge,
-- multiple ending combinations,
-- a shareable final result card.
-
-## Scope guardrails
-
-- Do not build a large explorable world.
-- Do not create complex buildings, currencies, or traditional tycoon upgrades for the MVP.
-- Keep most tasks fast so the real-time pressure remains fun.
-- Use handcrafted scenarios for reliable storytelling; use AI to vary details and consequences.
-- Make every AI feature visible and important to the player's decisions.
+- one playable Innovation City operations floor;
+- a short sequence of handcrafted, high-stakes incidents;
+- Gemma-backed triage and stress-test actions;
+- visible outcomes and multiple end states;
+- deterministic fallback when local inference is unavailable;
+- no cloud model dependency for the submitted demo;
+- no generic chatbot, dashboard, or separate “AI assistant” mode.
 
 ## Tone
 
-The game should be affectionate, fast, absurd, and slightly stressful. It should celebrate Agrim's work while exaggerating the chaos of handling three roles.
-
-Because the game uses a real person's identity and career, obtain Agrim's consent before publishing or presenting it prominently.
-
-## Reference assets
-
-- [Agrim LinkedIn experience](./agrim-singh-linkedin-experience.png)
-- [Agrim headshot](./agrim-singh-headshot.png)
-- [Steve Jobs visual reference](./steve-jobs-reference.png)
+Warm, high-stakes civic futurism: ambitious systems, human guardrails, and a mayor who has to decide what progress is for.

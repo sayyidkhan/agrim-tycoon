@@ -34,7 +34,7 @@ test("server-renders the Agrim Tycoon landing experience", async () => {
   assert.match(html, /Download for macOS/);
   assert.match(html, /How to play/);
   assert.match(html, /Gemma runs locally on your Mac/);
-  assert.match(html, /World direction by Gemini/);
+  assert.match(html, /Local Gemma decision support/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 

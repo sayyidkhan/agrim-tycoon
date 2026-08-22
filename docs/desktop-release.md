@@ -61,8 +61,12 @@ Preview, then redeploy the landing page.
 ## Release gate
 
 - Test the DMG on a Mac without Homebrew or a separate model install.
-- Confirm the game works while offline and Gemma changes an Elon plot-twist
-  decision.
+- Confirm the game works while offline and Gemma changes a Machine City
+  guardrail decision.
+- Record one Gemma triage or guardrail decision changing visible city stats;
+  this is the core Best Use of Gemma proof.
+- Keep any deterministic fallback clearly labelled in the demo; never present it
+  as a live Gemma completion.
 - Sign and notarize the app, including its sidecar, before public release.
 - Include the actual Gemma notice and comply with the terms for the chosen
   model; do not replace it with a placeholder.

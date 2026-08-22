@@ -500,7 +500,7 @@ export function LandingExperience({ onPlay }: { onPlay?: () => void }) {
         </div>
         <div className={styles.models} aria-label="Powered by artificial intelligence models">
           <span>Gemma runs locally on your Mac</span>
-          <span>World direction by Gemini</span>
+          <span>Local Gemma decision support</span>
         </div>
       </footer>
 
