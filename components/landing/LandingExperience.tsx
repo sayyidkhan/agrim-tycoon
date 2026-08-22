@@ -1,15 +1,42 @@
 "use client";
 
-import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ImgHTMLAttributes } from "react";
 import styles from "./landing.module.css";
 
 type SummaryPhase = "typing" | "holding" | "deleting" | "waiting";
 
+type SharedImageProps = ImgHTMLAttributes<HTMLImageElement> & {
+  fill?: boolean;
+  priority?: boolean;
+  unoptimized?: boolean;
+};
+
+function Image({ fill, style, ...props }: SharedImageProps) {
+  const { priority, unoptimized, ...imageProps } = props;
+  void priority;
+  void unoptimized;
+
+  return (
+    // The desktop bundle uses this same component without Next's image runtime.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      {...imageProps}
+      alt={imageProps.alt ?? ""}
+      style={
+        fill
+          ? { inset: 0, width: "100%", height: "100%", position: "absolute", ...style }
+          : style
+      }
+    />
+  );
+}
+
 const DEFAULT_MAC_DOWNLOAD_URL =
   "https://github.com/sayyidkhan/agrim-tycoon/releases";
 const MAC_DOWNLOAD_URL =
-  process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL || DEFAULT_MAC_DOWNLOAD_URL;
+  typeof process === "undefined"
+    ? DEFAULT_MAC_DOWNLOAD_URL
+    : process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL || DEFAULT_MAC_DOWNLOAD_URL;
 
 const SUMMARY =
   "Protect the community. Teach the builders. Ship something brilliant before Elon asks twice.";
@@ -62,7 +89,7 @@ const STORY_CHAPTERS = [
   },
 ] as const;
 
-export function LandingExperience() {
+export function LandingExperience({ onPlay }: { onPlay?: () => void }) {
   const [showGuide, setShowGuide] = useState(false);
   const [showBackstory, setShowBackstory] = useState(false);
   const [showElonPlotTwist, setShowElonPlotTwist] = useState(false);
@@ -76,6 +103,7 @@ export function LandingExperience() {
   const backstoryModalRef = useRef<HTMLElement>(null);
   const backstoryCloseButtonRef = useRef<HTMLButtonElement>(null);
   const backstoryButtonRef = useRef<HTMLButtonElement>(null);
+  const playButtonRef = useRef<HTMLButtonElement>(null);
   const downloadButtonRef = useRef<HTMLAnchorElement>(null);
 
   const closeGuide = useCallback(() => {
@@ -149,7 +177,8 @@ export function LandingExperience() {
 
       if (event.key === "Enter") {
         event.preventDefault();
-        downloadButtonRef.current?.click();
+        if (onPlay) playButtonRef.current?.click();
+        else downloadButtonRef.current?.click();
       }
 
       if (event.key.toLowerCase() === "h") {
@@ -168,6 +197,7 @@ export function LandingExperience() {
   }, [
     closeBackstory,
     closeGuide,
+    onPlay,
     openBackstory,
     showBackstory,
     showGuide,
@@ -420,15 +450,27 @@ export function LandingExperience() {
         </p>
 
         <nav className={styles.actions} aria-label="Game menu">
-          <a
-            ref={downloadButtonRef}
-            className={styles.startButton}
-            href={MAC_DOWNLOAD_URL}
-            download="AgrimTycoon-0.1.0-arm64.dmg"
-          >
-            <span>Download for macOS</span>
-            <span className={styles.arrow} aria-hidden="true">↓</span>
-          </a>
+          {onPlay ? (
+            <button
+              ref={playButtonRef}
+              className={styles.startButton}
+              type="button"
+              onClick={onPlay}
+            >
+              <span>Play the game</span>
+              <span className={styles.arrow} aria-hidden="true">→</span>
+            </button>
+          ) : (
+            <a
+              ref={downloadButtonRef}
+              className={styles.startButton}
+              href={MAC_DOWNLOAD_URL}
+              download="AgrimTycoon-0.1.0-arm64.dmg"
+            >
+              <span>Download for macOS</span>
+              <span className={styles.arrow} aria-hidden="true">↓</span>
+            </a>
+          )}
           <button
             ref={backstoryButtonRef}
             className={styles.guideButton}
@@ -462,7 +504,9 @@ export function LandingExperience() {
         </div>
       </footer>
 
-      <p className={styles.beginHint} aria-hidden="true">Press Enter to download</p>
+      <p className={styles.beginHint} aria-hidden="true">
+        {onPlay ? "Press Enter to play" : "Press Enter to download"}
+      </p>
 
       {showGuide ? (
         <div className={styles.modalBackdrop} role="presentation" onMouseDown={closeGuide}>
@@ -587,9 +631,15 @@ export function LandingExperience() {
 
             <div className={styles.modalFooter}>
               <p>Good luck, Mayor.</p>
-              <a href={MAC_DOWNLOAD_URL} download="AgrimTycoon-0.1.0-arm64.dmg">
-                Download for macOS <span aria-hidden="true">↓</span>
-              </a>
+              {onPlay ? (
+                <button type="button" onClick={onPlay}>
+                  Play the game <span aria-hidden="true">→</span>
+                </button>
+              ) : (
+                <a href={MAC_DOWNLOAD_URL} download="AgrimTycoon-0.1.0-arm64.dmg">
+                  Download for macOS <span aria-hidden="true">↓</span>
+                </a>
+              )}
             </div>
           </section>
         </div>

@@ -1,48 +1,51 @@
-# Agrim Tycoon — Submission Draft
+# Agrim Tycoon — Gavel Submission
 
-## Submission fields
+![Gavel submission form reference](assets/gavel-submission-form.png)
 
-| Required field | Submission value |
+## Paste into Gavel
+
+| Gavel field | Submission value |
 | --- | --- |
-| **Project name** | **Agrim Tycoon** |
-| **One-line description** | A city-management game where players save Innovation City from AI takeover with a local Gemma chief of staff—balancing talent, human oversight, and machine infrastructure. |
-| **Selected track** | **Best Use of Gemma** |
-| **Public GitHub repository** | [github.com/sayyidkhan/agrim-tycoon](https://github.com/sayyidkhan/agrim-tycoon) — confirm the repository is public before submitting. |
-| **Demo video** | `TBD — publish a public link; maximum duration: 3:00.` |
+| **Team name** | Agrim Tycoon |
+| **Team captain** | Sayyid Khan |
+| **Contact email** | sayyidkhan92@hotmail.com |
+| **Project link** | https://github.com/sayyidkhan/agrim-tycoon |
+| **Demo video link** | `TBD — add the public or unlisted video URL before submitting (maximum 3 minutes).` |
+| **Team members** | Sayyid Khan |
+| **Sponsor prize eligibility** | **Google DeepMind — Best Use of Gemma** |
 
-## Paste-ready submission
+### Project description
 
-**Project name:** Agrim Tycoon
+Agrim Tycoon is a city-management game where you become mayor of Innovation City and balance three competing worlds: AI mission systems, the 65labs community, and Code With AI’s next generation of builders. Every scenario forces a trade-off between speed, public trust, human oversight, and energy.
 
-**One-line description:** A city-management game where players save Innovation City from AI takeover with a local Gemma chief of staff—balancing talent, human oversight, and machine infrastructure.
+Gemma is the local chief of staff inside the game. It runs on-device through a bundled `llama.cpp` runtime, triaging incidents and simulating the “Elon arrives” plot twist as structured recommendations, narratives, and stat changes. Players can act on or challenge its recommendation, so Gemma materially changes the game loop rather than sitting beside it as a chatbot. The desktop build remains playable offline, with an explicit deterministic fallback if the local runtime is unavailable.
 
-**Selected track:** Best Use of Gemma
+Judges should play the SpaceXAI “Elon arrives” scenario and delegate it to Gemma. The result visibly shifts civic control, community trust, alignment, and the next decision in the city.
 
-**Public GitHub repository:** https://github.com/sayyidkhan/agrim-tycoon
+## Submission details and proof
 
-**Demo video:** `TBD`
-
-## Why Gemma is essential
-
-Agrim Tycoon is built around a local Gemma chief of staff, not a decorative chatbot. Gemma reviews delegated incidents, provides structured recommendations, and drives the SpaceXAI "Elon arrives" plot twist by simulating whether a decision accelerates Innovation City or weakens civic control.
-
-This makes the model part of the actual game loop: the player can delegate, read Gemma's reasoning, accept or challenge the result, and experience the impact on the city. The local deployment angle supports privacy-sensitive operational decisions and keeps the game playable through deterministic fallbacks when a model endpoint is unavailable.
+- **Project name:** Agrim Tycoon
+- **Repository:** [github.com/sayyidkhan/agrim-tycoon](https://github.com/sayyidkhan/agrim-tycoon)
+- **Track:** Best Use of Gemma
+- **Gemma proof:** a bundled local GGUF model, served by `llama.cpp`, returns structured incident triage and the Elon scenario branch.
+- **Demo video:** `TBD`
 
 ## Three-minute demo outline
 
-| Time | Show | Message |
+| Time | Show | What judges should see |
 | --- | --- | --- |
-| 0:00–0:20 | Title and premise | "Build the city. Tame the AI. Stay mayor." |
-| 0:20–0:50 | Three city engines | 65labs recruits talent; Code With AI keeps people in the loop; SpaceXAI runs the machines. |
-| 0:50–1:45 | SpaceXAI plot twist | Elon arrives. Make a decision and show Gemma's local probability branch, narrative, and change to civic control. |
-| 1:45–2:30 | A second delegated incident | Show Gemma's structured recommendation and how the player remains accountable for the call. |
-| 2:30–3:00 | End-state and Gemma proof | Show the city outcome, explain that Gemma is the local chief of staff, and close on the Gemma track. |
+| 0:00–0:20 | Landing page and premise | “Build the city. Tame the AI. Stay mayor.” |
+| 0:20–0:45 | Three city engines | The 65labs community, Code With AI builders, and SpaceXAI systems competing for the mayor’s attention. |
+| 0:45–1:35 | Gemma delegation | Delegate an incident to local Gemma and show its structured recommendation plus the player’s final responsibility. |
+| 1:35–2:20 | Elon plot twist | Ask Gemma to simulate Elon’s arrival; show the narrative branch and visible city-stat changes. |
+| 2:20–2:45 | A second Gemma incident | Delegate a moderation or operations incident to Gemma and show its recommendation affecting the next city decision. |
+| 2:45–3:00 | Close | Reiterate that Gemma is local and essential to the game loop. |
 
-## Before submitting
+## Before clicking Submit
 
-- [ ] Repository is public and opens without authentication.
-- [ ] README explains Gemma's role, local endpoint configuration, and deterministic fallback.
-- [ ] Demo is public or unlisted, plays without login, and is no longer than 3:00.
-- [ ] Video names **Best Use of Gemma** as the only selected track.
-- [ ] Video shows Gemma affecting a real game decision, not only describing it.
-- [ ] Any claimed local-model behaviour is demonstrated accurately.
+- [ ] Replace the demo-video placeholder with a public or unlisted URL that plays without login.
+- [ ] Confirm `Agrim Tycoon` is the actual registered team name; change it here if your Gavel team has a different name.
+- [ ] Confirm the repository is public.
+- [ ] Demonstrate Gemma changing a real game decision.
+- [ ] Select only **Google DeepMind — Best Use of Gemma** in Gavel.
+- [ ] Review all text in Gavel: submissions lock after sending.

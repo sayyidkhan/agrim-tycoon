@@ -21,6 +21,10 @@ import styles from "./game.module.css";
 
 type Phase = "playing" | "resolving" | "finished";
 
+interface GameExperienceProps {
+  onExit?: () => void;
+}
+
 interface Outcome {
   eyebrow: string;
   headline: string;
@@ -41,9 +45,9 @@ const statLabels: Array<{ key: keyof GameStats; label: string; code: string }> =
 ];
 
 const stationVisuals: Record<StationId, { desk: string; displayName: string }> = {
-  spacex: { desk: "MISSION SYSTEMS", displayName: "SpaceX AI" },
-  community: { desk: "TALENT NETWORK", displayName: "65labs" },
-  teaching: { desk: "BUILDER ACADEMY", displayName: "Code with AI" },
+  spacex: { desk: "MACHINE CITY", displayName: "Machine City" },
+  community: { desk: "TALENT NETWORK", displayName: "Talent Network" },
+  teaching: { desk: "BUILDER ACADEMY", displayName: "Builder Academy" },
 };
 
 function applyEffects(stats: GameStats, effects: Partial<GameStats>): GameStats {
@@ -81,7 +85,7 @@ function impactLabel(key: keyof GameStats) {
   return { community: "Community", students: "Builders", elon: "Elon", control: "Control", energy: "Energy" }[key];
 }
 
-export function GameExperience() {
+export function GameExperience({ onExit }: GameExperienceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const advanceTimer = useRef<number | null>(null);
   const [taskIndex, setTaskIndex] = useState(0);
@@ -408,7 +412,7 @@ export function GameExperience() {
               this.cameras.main.flash(180, 255, 72, 48, false);
             }
           };
-          setIncident("community");
+          setIncident("spacex");
           const onIncident = (event: Event) => {
             const detail = (event as CustomEvent<{ station: StationId; failed?: boolean }>).detail;
             setIncident(detail.station, detail.failed);
@@ -587,6 +591,10 @@ export function GameExperience() {
   }, [choose, chooseStation, phase, scenario, selectedStation]);
 
   const endings = useMemo(() => endingFor(stats), [stats]);
+  const exitGame = () => {
+    if (onExit) onExit();
+    else window.location.reload();
+  };
   const elapsed = scenario ? scenario.timeout - secondsLeft : 0;
   const timerScale = scenario ? Math.max(0, 1 - elapsed / scenario.timeout) : 0;
   const urgency = secondsLeft <= 5 ? "critical" : secondsLeft <= 10 ? "warning" : "stable";
@@ -595,17 +603,17 @@ export function GameExperience() {
     return (
       <main className={styles.endScreen}>
         <div className={styles.endGrain} aria-hidden="true" />
-        <p className={styles.endKicker}>Week complete · Performance review</p>
+        <p className={styles.endKicker}>Week complete · Innovation City charter review</p>
         <h1>{endings.overall}</h1>
-        <p className={styles.endSummary}>Agrim survived community chaos, ambitious students, and a launch review with almost enough sleep.</p>
+        <p className={styles.endSummary}>You did not just keep the city running. You decided who it answers to when the machines begin moving faster than its people.</p>
         <div className={styles.endingGrid}>
-          <article><span>65labs</span><strong>{endings.community}</strong><small>{stats.community}/100</small></article>
-          <article><span>Code with AI</span><strong>{endings.teaching}</strong><small>{stats.students}/100</small></article>
-          <article><span>SpaceX AI</span><strong>{endings.spacex}</strong><small>Elon {stats.elon}/100 · Control {stats.control}/100</small></article>
+          <article><span>People</span><strong>{endings.community}</strong><small>Community {stats.community}/100</small></article>
+          <article><span>Capability</span><strong>{endings.teaching}</strong><small>Builders {stats.students}/100</small></article>
+          <article><span>Power</span><strong>{endings.spacex}</strong><small>Acceleration {stats.elon}/100 · Control {stats.control}/100</small></article>
         </div>
-        <p className={styles.verdict}>“You kept three worlds moving. Next time, remember that coffee is not a fourth job.”</p>
+        <p className={styles.verdict}>“The city did not need a faster machine. It needed a mayor who could decide what progress was for.”</p>
         <div className={styles.endActions}>
-          <button type="button" onClick={() => window.location.reload()}>Return to title</button>
+          <button type="button" onClick={exitGame}>Return to title</button>
           <button
             type="button"
             onClick={() => {
@@ -633,7 +641,7 @@ export function GameExperience() {
           {/* This local HUD asset intentionally bypasses the runtime image optimizer. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/agrim-tech-overlord-logo.png" alt="" />
-          <div><span>Agrim Tycoon</span><strong>OPERATIONS FLOOR</strong></div>
+          <div><span>Agrim Tycoon</span><strong>INNOVATION CITY</strong></div>
         </div>
         <div className={styles.shiftBlock}>
           <span>{weekdays[Math.min(6, scenario.day - 1)]} · DAY {scenario.day}/07</span>
@@ -649,16 +657,16 @@ export function GameExperience() {
             </div>
           ))}
         </div>
-        <button className={styles.exitButton} type="button" onClick={() => window.location.reload()}>ESC<br /><span>Exit</span></button>
+        <button className={styles.exitButton} type="button" onClick={exitGame}>ESC<br /><span>Exit</span></button>
       </header>
 
       <div className={styles.missionStrip}>
         <span>LIVE OPERATIONS</span>
-        <p>One operator. Three worlds. Every choice costs something.</p>
+        <p>One mayor. Three systems. Every decision writes the charter.</p>
         <b>{taskIndex + 1} / {scenarios.length} INCIDENTS</b>
       </div>
 
-      <section className={styles.stationControls} aria-label="Agrim's workstations">
+      <section className={styles.stationControls} aria-label="Innovation City systems">
         {stations.map((station, index) => {
           const meta = stationMeta[station];
           const visual = stationVisuals[station];
