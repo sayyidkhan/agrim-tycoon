@@ -26,6 +26,40 @@ npm run dev
 
 The game remains playable without configured models by using deterministic fallback responses.
 
+## Desktop macOS POC
+
+The desktop client uses the same game UI but calls a local Tauri command instead
+of the web API. In a release build, Tauri launches a bundled `llama-server`
+sidecar on `127.0.0.1:8080`; no Gemini key is embedded in the app.
+
+For development, start an OpenAI-compatible local server, then run:
+
+```bash
+npm run desktop:dev
+```
+
+`GEMMA_BASE_URL` can point to that development server. Without it, or when the
+model cannot be reached, the game uses its deterministic fallback.
+
+### Build a distributable Apple Silicon DMG
+
+1. Accept the Gemma terms and obtain a GGUF model plus its required notice file.
+2. Install the Rust toolchain and CMake. The build creates a matching,
+   self-contained Apple Silicon `llama-server` automatically. A Homebrew
+   binary is not portable because it refers to Homebrew dylibs; the package
+   command rejects it.
+3. Export the model source URL and SHA-256 and the three `AGRIM_*` paths shown
+   in `.env.example`. The build pins llama.cpp in source; only set
+   `LLAMA_CPP_REVISION` to deliberately override that revision.
+4. Run `npm run desktop:build`.
+
+The build script stages the model, notice, and `llama-server` under
+`src-tauri/` locally, then Tauri bundles them into the DMG. Those artifacts are
+ignored by Git so the repository stays small and does not redistribute model
+weights by accident. Sign and notarize the final app before public distribution.
+The package build rejects an unpinned llama.cpp revision or a model whose
+SHA-256 differs from the declared value.
+
 ## AI configuration
 
 Gemma is expected to run as an OpenAI-compatible `llama-server` process:
@@ -64,6 +98,15 @@ environment variables. A `GEMMA_BASE_URL` pointing at `127.0.0.1` only works
 when Gemma runs on the same host, so it is not reachable from Vercel; the app
 uses its deterministic fallback unless Gemma is exposed through a reachable,
 appropriately secured service.
+
+After publishing the macOS DMG as a GitHub Release asset, set
+`NEXT_PUBLIC_MAC_DOWNLOAD_URL` in Vercel Production and Preview to its
+versioned asset URL. `NEXT_PUBLIC_*` values are compiled into the client, so
+redeploy after changing it. For v0.1.0, use:
+
+```text
+https://github.com/sayyidkhan/agrim-tycoon/releases/download/v0.1.0/AgrimTycoon-0.1.0-arm64.dmg
+```
 
 ## Cloudflare / Zo deployment
 

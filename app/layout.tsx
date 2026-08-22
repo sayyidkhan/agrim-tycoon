@@ -30,6 +30,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    icons: {
+      icon: [
+        {
+          url: "/images/agrim-tech-overlord-logo.png",
+          type: "image/png",
+          sizes: "512x512",
+        },
+      ],
+      apple: "/images/agrim-tech-overlord-logo.png",
+      shortcut: "/images/agrim-tech-overlord-logo.png",
+    },
     openGraph: {
       title,
       description,

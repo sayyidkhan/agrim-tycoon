@@ -39,6 +39,19 @@ yarn-error.log*
 next-env.d.ts
 *.tsbuildinfo
 /dist/
+/dist-desktop/
+/src-tauri/target/
+/src-tauri/gen/
+
+# Desktop release inputs are deliberately local: the Gemma weights and bundled
+# executable are large platform-specific artifacts, not source files.
+/src-tauri/binaries/llama-server-*
+/src-tauri/resources/models/*.gguf
+/src-tauri/resources/models/GEMMA_MODEL_MANIFEST.json
+/src-tauri/resources/licenses/GEMMA_NOTICE.md
+/models/*.gguf
+/artifacts/
+/public/downloads/AgrimTycoon.dmg
 /.wrangler/
 /outputs/
 /work/

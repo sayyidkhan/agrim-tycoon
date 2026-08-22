@@ -1,6 +1,56 @@
 use reqwest::Client;
 use serde_json::{json, Value};
-use std::{env, time::Duration};
+use std::{env, sync::Mutex, time::Duration};
+use tauri::{path::BaseDirectory, Manager};
+use tauri_plugin_shell::{process::CommandChild, ShellExt};
+
+struct LocalGemmaSidecar(Mutex<Option<CommandChild>>);
+
+fn start_bundled_gemma(app: &tauri::AppHandle) {
+    // A developer-set endpoint always wins. This makes `tauri dev` convenient
+    // while release builds start the private, bundled server automatically.
+    if env::var_os("GEMMA_BASE_URL").is_some() {
+        return;
+    }
+
+    let model = match app
+        .path()
+        .resolve("resources/models/gemma.gguf", BaseDirectory::Resource)
+    {
+        Ok(path) if path.is_file() => path,
+        _ => return,
+    };
+
+    let model_path = model.to_string_lossy().into_owned();
+    let command = match app.shell().sidecar("llama-server") {
+        Ok(command) => command,
+        Err(error) => {
+            eprintln!("Unable to initialise bundled llama-server: {error}");
+            return;
+        }
+    };
+
+    let (_, child) = match command.args([
+        "--model",
+        &model_path,
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8080",
+        "--jinja",
+        "--no-webui",
+    ]).spawn() {
+        Ok(process) => process,
+        Err(error) => {
+            eprintln!("Unable to start bundled llama-server: {error}");
+            return;
+        }
+    };
+
+    if let Ok(mut state) = app.state::<LocalGemmaSidecar>().0.lock() {
+        *state = Some(child);
+    }
+}
 
 fn gemma_endpoint() -> String {
     let base = env::var("GEMMA_BASE_URL")
@@ -171,6 +221,12 @@ async fn gemma_request(payload: Value) -> Value {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .manage(LocalGemmaSidecar(Mutex::new(None)))
+        .setup(|app| {
+            start_bundled_gemma(app.handle());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![gemma_request])
         .run(tauri::generate_context!())
         .expect("error while running Agrim Tycoon");

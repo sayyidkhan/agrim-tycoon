@@ -30,6 +30,9 @@
   "bundle": {
     "active": true,
     "targets": ["dmg"],
+    "icon": ["icons/icon.icns"],
+    "externalBin": ["binaries/llama-server"],
+    "resources": ["resources/models", "resources/licenses"],
     "category": "Game",
     "shortDescription": "Build the city. Tame the AI. Stay mayor.",
     "longDescription": "A management game about balancing Innovation City's people, skills, and machines.",

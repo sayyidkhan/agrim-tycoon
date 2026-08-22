@@ -6,8 +6,10 @@ import styles from "./landing.module.css";
 
 type SummaryPhase = "typing" | "holding" | "deleting" | "waiting";
 
+const DEFAULT_MAC_DOWNLOAD_URL =
+  "https://github.com/sayyidkhan/agrim-tycoon/releases/download/v0.1.0/AgrimTycoon-0.1.0-arm64.dmg";
 const MAC_DOWNLOAD_URL =
-  process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL ?? "/downloads/AgrimTycoon.dmg";
+  process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL ?? DEFAULT_MAC_DOWNLOAD_URL;
 
 const SUMMARY =
   "Protect the community. Teach the builders. Ship something brilliant before Elon asks twice.";
@@ -422,7 +424,7 @@ export function LandingExperience() {
             ref={downloadButtonRef}
             className={styles.startButton}
             href={MAC_DOWNLOAD_URL}
-            download="AgrimTycoon.dmg"
+            download="AgrimTycoon-0.1.0-arm64.dmg"
           >
             <span>Download for macOS</span>
             <span className={styles.arrow} aria-hidden="true">↓</span>
@@ -585,7 +587,7 @@ export function LandingExperience() {
 
             <div className={styles.modalFooter}>
               <p>Good luck, Mayor.</p>
-              <a href={MAC_DOWNLOAD_URL} download="AgrimTycoon.dmg">
+              <a href={MAC_DOWNLOAD_URL} download="AgrimTycoon-0.1.0-arm64.dmg">
                 Download for macOS <span aria-hidden="true">↓</span>
               </a>
             </div>
